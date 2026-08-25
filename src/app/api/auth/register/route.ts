@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { initDatabase } from "@/lib/db/init";
 import { shops, users, auditLogs } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
+import { validateEmail } from "@/lib/emailValidation";
 
 export async function POST(req: Request) {
   try {
@@ -27,6 +28,15 @@ export async function POST(req: Request) {
     if (!shopName || !name || !email || !password) {
       return NextResponse.json(
         { error: "Pharmacy name, staff name, email, and password are required." },
+        { status: 400 }
+      );
+    }
+
+    // Strict email formatting, disposable domain & syntax check
+    const emailValidation = validateEmail(email);
+    if (!emailValidation.isValid) {
+      return NextResponse.json(
+        { error: emailValidation.error || "Please enter a valid, active email address." },
         { status: 400 }
       );
     }

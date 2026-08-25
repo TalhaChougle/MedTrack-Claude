@@ -124,3 +124,13 @@ export const sales = sqliteTable("sales", {
   batchDetails: text("batch_details"),
   createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`),
 });
+
+export const passwordResetTokens = sqliteTable("password_reset_tokens", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  email: text("email").notNull(),
+  token: text("token").notNull(),
+  expiresAt: integer("expires_at").notNull(), // Epoch ms
+  used: integer("used", { mode: "boolean" }).default(false).notNull(),
+  createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`),
+});
+

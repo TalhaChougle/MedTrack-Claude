@@ -4,7 +4,21 @@ import { useState, useEffect } from "react";
 import { signIn, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Pill, Lock, Mail, ArrowRight, AlertTriangle, CheckCircle2, Database, Eye, EyeOff } from "lucide-react";
+import {
+  Pill,
+  Lock,
+  Mail,
+  ArrowRight,
+  AlertTriangle,
+  CheckCircle2,
+  Database,
+  Eye,
+  EyeOff,
+  Sparkles,
+  HelpCircle,
+} from "lucide-react";
+import { validateEmail } from "@/lib/emailValidation";
+import ForgotPasswordModal from "@/components/ForgotPasswordModal";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -15,6 +29,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [initMsg, setInitMsg] = useState("");
+  const [isForgotOpen, setIsForgotOpen] = useState(false);
 
   useEffect(() => {
     if (status === "authenticated") {
@@ -22,11 +37,26 @@ export default function LoginPage() {
     }
   }, [status, router]);
 
+  // Real-time email validation
+  const emailValidation = email ? validateEmail(email) : null;
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setErrorMsg("");
     setInitMsg("");
+
+    if (!email) {
+      setErrorMsg("Email address is required.");
+      return;
+    }
+
+    const val = validateEmail(email);
+    if (!val.isValid) {
+      setErrorMsg(val.error || "Please enter a valid email address.");
+      return;
+    }
+
+    setLoading(true);
 
     try {
       const res = await signIn("credentials", {
@@ -73,7 +103,6 @@ export default function LoginPage() {
         {/* Decorative ambient background */}
         <div className="absolute -top-24 -right-24 w-48 h-48 bg-[#4FC3E8]/20 rounded-full blur-3xl pointer-events-none"></div>
 
-
         {/* Brand Header */}
         <div className="text-center space-y-3">
           <div className="inline-flex p-3.5 rounded-2xl bg-[#1E3A5F] text-white shadow-md shadow-[#1E3A5F]/20">
@@ -114,17 +143,55 @@ export default function LoginPage() {
                 type="email"
                 required
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (errorMsg) setErrorMsg("");
+                }}
                 placeholder="pharmacist@example.com"
                 className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-3 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-teal-600 focus:bg-white focus:ring-2 focus:ring-teal-500/20 transition-all font-medium"
               />
             </div>
+
+            {/* Real-time Email Validation Indicator */}
+            {email && emailValidation && (
+              <div className="mt-2">
+                {emailValidation.isValid ? (
+                  <div className="inline-flex items-center gap-1.5 text-xs font-bold text-teal-700 bg-teal-50 border border-teal-200 px-2.5 py-1 rounded-lg">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-teal-600" />
+                    <span>Valid Email</span>
+                    {emailValidation.suggestion && (
+                      <button
+                        type="button"
+                        onClick={() => setEmail(emailValidation.suggestion!)}
+                        className="ml-1 text-amber-700 underline hover:text-amber-900 cursor-pointer"
+                      >
+                        (Did you mean {emailValidation.suggestion}?)
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  <div className="inline-flex items-center gap-1.5 text-xs font-bold text-rose-700 bg-rose-50 border border-rose-200 px-2.5 py-1 rounded-lg">
+                    <AlertTriangle className="w-3.5 h-3.5 text-rose-500" />
+                    <span>{emailValidation.error}</span>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           <div>
-            <label className="block text-xs font-extrabold text-[#1E3A5F] mb-1.5 uppercase tracking-wider">
-              Password
-            </label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="block text-xs font-extrabold text-[#1E3A5F] uppercase tracking-wider">
+                Password
+              </label>
+              <button
+                type="button"
+                onClick={() => setIsForgotOpen(true)}
+                className="text-xs font-bold text-teal-700 hover:text-teal-900 hover:underline transition-colors cursor-pointer"
+              >
+                Forgot Password?
+              </button>
+            </div>
             <div className="relative">
               <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5 pointer-events-none" />
               <input
@@ -153,7 +220,7 @@ export default function LoginPage() {
 
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || (emailValidation ? !emailValidation.isValid : false)}
             className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-[#1E3A5F] via-[#0F2544] to-[#0D9488] hover:from-[#0F2544] hover:to-[#0F766E] text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-[#1E3A5F]/20 transition-all transform active:scale-[0.99] disabled:opacity-50 cursor-pointer"
           >
             <span>Sign In to Pharmacy Dashboard</span>
@@ -185,6 +252,13 @@ export default function LoginPage() {
           </div>
         </div>
       </div>
+
+      {/* Forgot Password Modal */}
+      <ForgotPasswordModal
+        isOpen={isForgotOpen}
+        onClose={() => setIsForgotOpen(false)}
+        initialEmail={email}
+      />
     </div>
   );
 }

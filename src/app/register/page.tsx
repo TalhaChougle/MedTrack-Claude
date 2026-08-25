@@ -4,7 +4,21 @@ import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Pill, Building2, User, Mail, Lock, Phone, FileText, ArrowRight, AlertTriangle, CheckCircle2, Eye, EyeOff } from "lucide-react";
+import {
+  Pill,
+  Building2,
+  User,
+  Mail,
+  Lock,
+  Phone,
+  FileText,
+  ArrowRight,
+  AlertTriangle,
+  CheckCircle2,
+  Eye,
+  EyeOff,
+} from "lucide-react";
+import { validateEmail } from "@/lib/emailValidation";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -16,6 +30,7 @@ export default function RegisterPage() {
       router.push("/");
     }
   }, [status, router]);
+
   const [formData, setFormData] = useState({
     shopName: "",
     address: "",
@@ -30,15 +45,36 @@ export default function RegisterPage() {
   const [errorMsg, setErrorMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
 
+  // Real-time email validation
+  const emailValidation = formData.email ? validateEmail(formData.email) : null;
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+    if (errorMsg) setErrorMsg("");
   };
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setErrorMsg("");
     setSuccessMsg("");
+
+    if (!formData.email) {
+      setErrorMsg("Email address is required.");
+      return;
+    }
+
+    const val = validateEmail(formData.email);
+    if (!val.isValid) {
+      setErrorMsg(val.error || "Please enter a valid, active email address.");
+      return;
+    }
+
+    if (formData.password.length < 6) {
+      setErrorMsg("Password should be at least 6 characters long.");
+      return;
+    }
+
+    setLoading(true);
 
     try {
       const res = await fetch("/api/auth/register", {
@@ -52,7 +88,9 @@ export default function RegisterPage() {
       if (!res.ok) {
         setErrorMsg(data.error || "Registration failed.");
       } else {
-        setSuccessMsg("Pharmacy and Owner account created successfully! Redirecting to login...");
+        setSuccessMsg(
+          "Pharmacy and Owner account created successfully! Redirecting to login..."
+        );
         setTimeout(() => {
           router.push("/login");
         }, 1500);
@@ -69,7 +107,6 @@ export default function RegisterPage() {
       <div className="max-w-xl w-full space-y-8 bg-white border border-white/20 p-8 rounded-3xl shadow-2xl relative overflow-hidden">
         {/* Top Glow */}
         <div className="absolute -top-24 -left-24 w-48 h-48 bg-[#4FC3E8]/20 rounded-full blur-3xl pointer-events-none"></div>
-
 
         {/* Brand Header */}
         <div className="text-center space-y-2">
@@ -215,6 +252,37 @@ export default function RegisterPage() {
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-teal-600 focus:bg-white focus:ring-2 focus:ring-teal-500/20 font-medium"
                   />
                 </div>
+
+                {/* Real-time Email Validation Indicator */}
+                {formData.email && emailValidation && (
+                  <div className="mt-1.5">
+                    {emailValidation.isValid ? (
+                      <div className="inline-flex items-center gap-1.5 text-[11px] font-bold text-teal-700 bg-teal-50 border border-teal-200 px-2 py-0.5 rounded-lg">
+                        <CheckCircle2 className="w-3 h-3 text-teal-600" />
+                        <span>Valid Email</span>
+                        {emailValidation.suggestion && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setFormData({
+                                ...formData,
+                                email: emailValidation.suggestion!,
+                              })
+                            }
+                            className="ml-1 text-amber-700 underline hover:text-amber-900 cursor-pointer"
+                          >
+                            (Use {emailValidation.suggestion}?)
+                          </button>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="inline-flex items-center gap-1 text-[11px] font-bold text-rose-700 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded-lg">
+                        <AlertTriangle className="w-3 h-3 text-rose-500 shrink-0" />
+                        <span>{emailValidation.error}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               <div>
@@ -252,7 +320,9 @@ export default function RegisterPage() {
 
           <button
             type="submit"
-            disabled={loading}
+            disabled={
+              loading || (emailValidation ? !emailValidation.isValid : false)
+            }
             className="w-full mt-4 py-3.5 px-4 rounded-xl bg-gradient-to-r from-[#1E3A5F] via-[#0F2544] to-[#0D9488] hover:from-[#0F2544] hover:to-[#0F766E] text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-[#1E3A5F]/20 transition-all transform active:scale-[0.99] disabled:opacity-50 cursor-pointer"
           >
             <span>Register Pharmacy & Account</span>

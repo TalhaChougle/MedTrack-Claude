@@ -92,12 +92,21 @@ export async function initDatabase() {
         last_scanned_time INTEGER NOT NULL DEFAULT 0,
         created_at INTEGER NOT NULL
       );`,
+      `CREATE TABLE IF NOT EXISTS password_reset_tokens (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        email TEXT NOT NULL,
+        token TEXT NOT NULL,
+        expires_at INTEGER NOT NULL,
+        used INTEGER NOT NULL DEFAULT 0,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      );`,
       `CREATE INDEX IF NOT EXISTS idx_users_shop ON users(shop_id);`,
       `CREATE INDEX IF NOT EXISTS idx_medicines_shop ON medicines(shop_id);`,
       `CREATE INDEX IF NOT EXISTS idx_medicines_barcode ON medicines(shop_id, barcode);`,
       `CREATE INDEX IF NOT EXISTS idx_batches_shop ON batches(shop_id);`,
       `CREATE INDEX IF NOT EXISTS idx_batches_expiry ON batches(medicine_id, expiry_date);`,
       `CREATE INDEX IF NOT EXISTS idx_audit_shop ON audit_logs(shop_id);`,
+      `CREATE INDEX IF NOT EXISTS idx_reset_email ON password_reset_tokens(email);`,
       `INSERT OR IGNORE INTO shops (id, name, address, phone) VALUES (1, 'Apex MedTrack Pharmacy', '123 Health Ave', '+1-800-555-MEDS');`,
       {
         sql: `INSERT OR IGNORE INTO users (id, shop_id, name, email, password_hash, role) VALUES (1, 1, 'Pharmacy Admin', 'admin@medtrack.com', ?, 'owner');`,

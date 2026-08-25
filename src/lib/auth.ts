@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { initDatabase } from "@/lib/db/init";
 import { users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
+import { validateEmail } from "@/lib/emailValidation";
 
 export const authOptions: AuthOptions = {
   providers: [
@@ -17,6 +18,11 @@ export const authOptions: AuthOptions = {
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
           throw new Error("Missing email or password");
+        }
+
+        const validation = validateEmail(credentials.email);
+        if (!validation.isValid) {
+          throw new Error(validation.error || "Invalid email format");
         }
 
         try {
