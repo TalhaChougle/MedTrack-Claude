@@ -310,8 +310,8 @@ export default function SellFEFOPage() {
                     key={med.id}
                     onClick={() => handleSelectMedicine(med)}
                     className={`w-full text-left p-3 rounded-2xl border text-xs transition-all flex items-center justify-between cursor-pointer ${selectedMed?.id === med.id
-                      ? "bg-teal-50 border-teal-300 text-slate-800 shadow-xs"
-                      : "bg-white border-slate-200 text-slate-700 hover:border-slate-300"
+                        ? "bg-teal-50 border-teal-300 text-slate-800 shadow-xs"
+                        : "bg-white border-slate-200 text-slate-700 hover:border-slate-300"
                       }`}
                   >
                     <div className="space-y-1">
@@ -492,8 +492,8 @@ export default function SellFEFOPage() {
                       type="button"
                       onClick={() => setDiscountPercent(pct)}
                       className={`px-2.5 py-1 rounded-xl text-xs font-extrabold border transition-all cursor-pointer ${discountPercent === pct
-                        ? "bg-amber-500 text-slate-950 border-amber-600 shadow-xs"
-                        : "bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200"
+                          ? "bg-amber-500 text-slate-950 border-amber-600 shadow-xs"
+                          : "bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200"
                         }`}
                     >
                       {pct}%

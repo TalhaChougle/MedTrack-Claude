@@ -149,7 +149,6 @@ export async function initDatabase() {
       `CREATE INDEX IF NOT EXISTS idx_batches_shop ON batches(shop_id);`,
       `CREATE INDEX IF NOT EXISTS idx_batches_expiry ON batches(medicine_id, expiry_date);`,
       `CREATE INDEX IF NOT EXISTS idx_patients_shop ON patients(shop_id);`,
-      `CREATE INDEX IF NOT EXISTS idx_sales_patient ON sales(patient_id);`,
       `CREATE INDEX IF NOT EXISTS idx_audit_shop ON audit_logs(shop_id);`,
       `CREATE INDEX IF NOT EXISTS idx_reset_email ON password_reset_tokens(email);`,
       `INSERT OR IGNORE INTO shops (id, name, address, phone) VALUES (1, 'Apex MedTrack Pharmacy', '123 Health Ave', '+1-800-555-MEDS');`,
@@ -169,6 +168,11 @@ export async function initDatabase() {
     try {
       await client.execute("ALTER TABLE sales ADD COLUMN doctor_name TEXT;");
     } catch { /* Column may already exist */ }
+
+    // Create index on sales.patient_id only after the column is guaranteed to exist
+    try {
+      await client.execute("CREATE INDEX IF NOT EXISTS idx_sales_patient ON sales(patient_id);");
+    } catch { /* Index may already exist or column race - safe to ignore */ }
 
     // Seed default sample medicine if cloud database is fresh
     try {

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAuthSession } from "@/lib/auth";
 import { db, client } from "@/lib/db";
+import { initDatabase } from "@/lib/db/init";
 import { medicines, batches, auditLogs, sales, patients, users } from "@/lib/db/schema";
 import { eq, and, asc, gt, sql } from "drizzle-orm";
 import { sendLowStockAlertEmail } from "@/lib/emailService";
@@ -15,6 +16,13 @@ export async function POST(req: Request) {
   const userId = parseInt(session.user.id);
 
   try {
+    // Ensure schema (including patient columns) exists before touching sales/patients
+    try {
+      await initDatabase();
+    } catch (e) {
+      console.warn("DB init warning in sell POST:", e);
+    }
+
     const body = await req.json();
     const {
       medicineId,
@@ -101,8 +109,8 @@ export async function POST(req: Request) {
     // Determine effective selling unit price
     const passedPrice = parseFloat(customUnitPrice);
     const fallbackPrice = allBatchesForMed.length > 0 ? (allBatchesForMed[0].costPrice || 0) : 0;
-    const effectiveUnitPrice = !isNaN(passedPrice) && passedPrice > 0 
-      ? passedPrice 
+    const effectiveUnitPrice = !isNaN(passedPrice) && passedPrice > 0
+      ? passedPrice
       : (med.unitPrice > 0 ? med.unitPrice : fallbackPrice);
 
     // Update medicine unit price in database if it was updated or previously zero
@@ -345,4 +353,3 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
-
