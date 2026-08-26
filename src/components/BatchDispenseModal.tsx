@@ -40,6 +40,8 @@ export default function BatchDispenseModal({
   const [quantity, setQuantity] = useState("1");
   const [unitPrice, setUnitPrice] = useState("");
   const [discountPercent, setDiscountPercent] = useState("0");
+  const [patientName, setPatientName] = useState("");
+  const [doctorName, setDoctorName] = useState("");
   const [loadingSubmit, setLoadingSubmit] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [saleReceipt, setSaleReceipt] = useState<any | null>(null);
@@ -50,6 +52,8 @@ export default function BatchDispenseModal({
       setSelectedBatch(null);
       setQuantity("1");
       setDiscountPercent("0");
+      setPatientName("");
+      setDoctorName("");
       setErrorMsg("");
       setSaleReceipt(null);
 
@@ -153,6 +157,8 @@ export default function BatchDispenseModal({
           quantity: reqQty,
           unitPrice: priceToSubmit,
           discountPercent: discToSubmit,
+          patientName: patientName.trim() || undefined,
+          doctorName: doctorName.trim() || undefined,
           batchId: selectedBatch ? selectedBatch.id : undefined,
         }),
       });
@@ -461,6 +467,44 @@ export default function BatchDispenseModal({
                 ))}
               </div>
 
+              {/* Optional Patient & Doctor Information */}
+              <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-extrabold text-[#1E3A5F] uppercase tracking-wider">
+                    Customer & Prescription Info
+                  </span>
+                  <span className="text-[10px] bg-slate-200 text-slate-700 font-bold px-2 py-0.5 rounded-full">
+                    Optional Fields
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                      Patient's Name <span className="text-slate-400 font-normal">(Optional)</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={patientName}
+                      onChange={(e) => setPatientName(e.target.value)}
+                      placeholder="e.g. Rahul Sharma"
+                      className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-800 focus:outline-none focus:border-teal-600 shadow-2xs"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                      Doctor's Name <span className="text-slate-400 font-normal">(Optional)</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={doctorName}
+                      onChange={(e) => setDoctorName(e.target.value)}
+                      placeholder="e.g. Dr. A. K. Verma"
+                      className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-800 focus:outline-none focus:border-teal-600 shadow-2xs"
+                    />
+                  </div>
+                </div>
+              </div>
+
               {/* Total Sale Bill Amount Banner with Subtotal & Discount Breakdown */}
               <div className="p-4 rounded-2xl bg-teal-50 border border-teal-200 flex items-center justify-between shadow-xs">
                 <div className="space-y-0.5">
@@ -549,6 +593,23 @@ export default function BatchDispenseModal({
                   <span className="font-black text-emerald-700 text-base">₹{saleReceipt.totalPrice}</span>
                 </div>
               </div>
+
+              {(saleReceipt.patientName || saleReceipt.doctorName) && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs bg-cyan-50/60 p-3.5 rounded-2xl border border-cyan-200">
+                  {saleReceipt.patientName && (
+                    <div>
+                      <span className="text-cyan-800 text-[10px] block font-bold uppercase tracking-wider">Patient Name</span>
+                      <span className="font-extrabold text-slate-800 text-xs">{saleReceipt.patientName}</span>
+                    </div>
+                  )}
+                  {saleReceipt.doctorName && (
+                    <div>
+                      <span className="text-cyan-800 text-[10px] block font-bold uppercase tracking-wider">Prescribing Doctor</span>
+                      <span className="font-extrabold text-slate-800 text-xs">{saleReceipt.doctorName}</span>
+                    </div>
+                  )}
+                </div>
+              )}
 
               <div className="space-y-2">
                 <p className="text-[11px] font-bold text-[#1E3A5F] uppercase tracking-wider">

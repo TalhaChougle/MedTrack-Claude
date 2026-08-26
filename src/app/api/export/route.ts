@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAuthSession } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { batches, medicines, wastageLogs, auditLogs, users } from "@/lib/db/schema";
+import { batches, medicines, wastageLogs, auditLogs, users, sales } from "@/lib/db/schema";
 import { eq, asc, desc } from "drizzle-orm";
 import { classifyExpiry } from "@/app/api/batches/alerts/route";
 
@@ -17,11 +17,16 @@ function formatAuditDetail(detailStr: string | null): string {
     const obj = JSON.parse(detailStr);
     const parts: string[] = [];
     if (obj.medicineName) parts.push(`Medicine: ${obj.medicineName}`);
+    if (obj.patientName) parts.push(`Patient: ${obj.patientName}`);
+    if (obj.doctorName) parts.push(`Doctor: ${obj.doctorName}`);
     if (obj.batchNumber) parts.push(`Batch: ${obj.batchNumber}`);
     if (obj.quantity !== undefined || obj.requestedQuantity !== undefined) {
       parts.push(`Qty: ${obj.quantity ?? obj.requestedQuantity}`);
     }
     if (obj.unitPrice !== undefined) parts.push(`Price: ₹${obj.unitPrice}`);
+    if (obj.discountPercent !== undefined && obj.discountPercent > 0) {
+      parts.push(`Disc: ${obj.discountPercent}% (-₹${obj.discountAmount || 0})`);
+    }
     if (obj.totalSaleAmount !== undefined) parts.push(`Total: ₹${obj.totalSaleAmount}`);
     if (obj.expiryDate) parts.push(`Exp: ${obj.expiryDate}`);
 
@@ -88,7 +93,95 @@ export async function GET(req: Request) {
   const todayStr = new Date().toISOString().split("T")[0];
 
   try {
-    if (type === "expiry") {
+    if (type === "sales") {
+      // Sales Report Export (with Patient Name, Doctor Name, Date, Medicine, Quantity, Price, Discount %)
+      const salesList = await db
+        .select({
+          id: sales.id,
+          medicineName: sales.medicineName,
+          patientName: sales.patientName,
+          doctorName: sales.doctorName,
+          quantity: sales.quantity,
+          unitPrice: sales.unitPrice,
+          subtotal: sales.subtotal,
+          discountPercent: sales.discountPercent,
+          discountAmount: sales.discountAmount,
+          totalPrice: sales.totalPrice,
+          batchDetails: sales.batchDetails,
+          createdAt: sales.createdAt,
+          userName: users.name,
+        })
+        .from(sales)
+        .leftJoin(users, eq(sales.userId, users.id))
+        .where(eq(sales.shopId, shopId))
+        .orderBy(desc(sales.createdAt));
+
+      const headers = [
+        "Invoice ID",
+        "Date & Exact Time",
+        "Patient Name",
+        "Prescribing Doctor",
+        "Medicine Sold",
+        "Units Sold",
+        "Unit Price (₹)",
+        "Subtotal (₹)",
+        "Discount (%)",
+        "Discount Amount (₹)",
+        "Net Bill Amount (₹)",
+        "Batches Deducted",
+        "Staff Credentials",
+      ];
+
+      const dataRows = salesList.map((s) => {
+        let batchesStr = "N/A";
+        if (s.batchDetails) {
+          try {
+            const parsed = JSON.parse(s.batchDetails);
+            batchesStr = parsed.map((b: any) => `#${b.batchNumber} (-${b.deductedQuantity}u)`).join(", ");
+          } catch (e) {}
+        }
+
+        const txDate = s.createdAt ? new Date(s.createdAt) : new Date();
+        const formattedDate = `${txDate.toLocaleDateString("en-IN")} ${txDate.toLocaleTimeString("en-IN")}`;
+
+        return [
+          `INV-${1000 + s.id}`,
+          formattedDate,
+          s.patientName || "N/A (General Patient)",
+          s.doctorName || "N/A (OTC / Self)",
+          s.medicineName,
+          s.quantity,
+          `₹${s.unitPrice.toFixed(2)}`,
+          `₹${(s.subtotal || s.quantity * s.unitPrice).toFixed(2)}`,
+          `${s.discountPercent || 0}%`,
+          `₹${(s.discountAmount || 0).toFixed(2)}`,
+          `₹${s.totalPrice.toFixed(2)}`,
+          batchesStr,
+          s.userName || "Pharmacy Staff",
+        ];
+      });
+
+      if (format === "csv") {
+        const csvRows = dataRows.map((r) => r.map(escapeCsv).join(","));
+        const csvContent = "\uFEFF" + [headers.map(escapeCsv).join(","), ...csvRows].join("\r\n");
+        return new NextResponse(csvContent, {
+          status: 200,
+          headers: {
+            "Content-Type": "text/csv; charset=utf-8",
+            "Content-Disposition": `attachment; filename="sales-report-${todayStr}.csv"`,
+          },
+        });
+      }
+
+      const excelHtml = buildExcelHtml("Pharmacy Sales & Invoices Report", headers, dataRows);
+      return new NextResponse(excelHtml, {
+        status: 200,
+        headers: {
+          "Content-Type": "application/vnd.ms-excel; charset=utf-8",
+          "Content-Disposition": `attachment; filename="sales-report-${todayStr}.xls"`,
+        },
+      });
+    } else if (type === "expiry") {
       // Expiry Report
       const batchList = await db
         .select({
@@ -294,7 +387,7 @@ export async function GET(req: Request) {
       });
     } else {
       return NextResponse.json(
-        { error: "Invalid export type. Must be 'expiry', 'wastage', or 'audit'." },
+        { error: "Invalid export type. Must be 'sales', 'expiry', 'wastage', or 'audit'." },
         { status: 400 }
       );
     }

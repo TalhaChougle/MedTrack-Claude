@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { getAuthSession } from "@/lib/auth";
 import { db, client } from "@/lib/db";
-import { medicines, batches, auditLogs, sales } from "@/lib/db/schema";
+import { medicines, batches, auditLogs, sales, patients } from "@/lib/db/schema";
 import { eq, and, asc, gt } from "drizzle-orm";
+import { sendLowStockAlertEmail } from "@/lib/emailService";
 
 export async function POST(req: Request) {
   const session = await getAuthSession();
@@ -15,7 +16,18 @@ export async function POST(req: Request) {
 
   try {
     const body = await req.json();
-    const { medicineId, quantity, unitPrice: customUnitPrice, batchId, discountPercent } = body;
+    const {
+      medicineId,
+      quantity,
+      unitPrice: customUnitPrice,
+      batchId,
+      discountPercent,
+      patientName: rawPatientName,
+      doctorName: rawDoctorName,
+    } = body;
+
+    const patientName = typeof rawPatientName === "string" ? rawPatientName.trim() : "";
+    const doctorName = typeof rawDoctorName === "string" ? rawDoctorName.trim() : "";
 
     const medId = parseInt(medicineId);
     const requestedQty = parseInt(quantity);
@@ -86,7 +98,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // Determine effective selling unit price (passed custom price -> med price -> batch cost price fallback)
+    // Determine effective selling unit price
     const passedPrice = parseFloat(customUnitPrice);
     const fallbackPrice = allBatchesForMed.length > 0 ? (allBatchesForMed[0].costPrice || 0) : 0;
     const effectiveUnitPrice = !isNaN(passedPrice) && passedPrice > 0 
@@ -112,7 +124,36 @@ export async function POST(req: Request) {
       );
     }
 
-    // 4. Iterate through sorted batches and deduct FEFO
+    // 4. Handle Patient record creation/linking if patientName provided
+    let patientId: number | null = null;
+    if (patientName) {
+      try {
+        const existingPatients = await db
+          .select()
+          .from(patients)
+          .where(and(eq(patients.shopId, shopId), eq(patients.name, patientName)));
+
+        if (existingPatients.length > 0) {
+          patientId = existingPatients[0].id;
+        } else {
+          const inserted = await db
+            .insert(patients)
+            .values({
+              shopId,
+              name: patientName,
+            })
+            .returning({ id: patients.id });
+          
+          if (inserted.length > 0) {
+            patientId = inserted[0].id;
+          }
+        }
+      } catch (err) {
+        console.warn("Failed to register patient record:", err);
+      }
+    }
+
+    // 5. Iterate through sorted batches and deduct FEFO
     let remainingToDeduct = requestedQty;
     const deductions: Array<{
       batchId: number;
@@ -130,7 +171,7 @@ export async function POST(req: Request) {
       const newQty = batchItem.quantity - takeFromThisBatch;
       remainingToDeduct -= takeFromThisBatch;
 
-      // 5. Update batch in database
+      // Update batch in database
       await db
         .update(batches)
         .set({ quantity: newQty })
@@ -152,34 +193,14 @@ export async function POST(req: Request) {
     const totalSaleAmount = Math.round((subtotal - discountAmount) * 100) / 100;
     const nowIsoTimestamp = new Date().toISOString();
 
-    // Ensure sales table exists
-    try {
-      await client.execute(`
-        CREATE TABLE IF NOT EXISTS sales (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          shop_id INTEGER NOT NULL REFERENCES shops(id) ON DELETE CASCADE,
-          user_id INTEGER REFERENCES users(id),
-          medicine_id INTEGER NOT NULL REFERENCES medicines(id) ON DELETE CASCADE,
-          medicine_name TEXT NOT NULL,
-          quantity INTEGER NOT NULL,
-          unit_price REAL NOT NULL,
-          subtotal REAL NOT NULL DEFAULT 0,
-          discount_percent REAL NOT NULL DEFAULT 0,
-          discount_amount REAL NOT NULL DEFAULT 0,
-          total_price REAL NOT NULL,
-          batch_details TEXT,
-          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        );
-      `);
-    } catch (e) {
-      console.warn("Table create warning:", e);
-    }
-
     // 6. Record sale entry into sales table
     try {
       await db.insert(sales).values({
         shopId,
         userId,
+        patientId,
+        patientName: patientName || null,
+        doctorName: doctorName || null,
         medicineId: med.id,
         medicineName: med.name,
         quantity: requestedQty,
@@ -205,6 +226,8 @@ export async function POST(req: Request) {
       detail: JSON.stringify({
         medicineName: med.name,
         requestedQuantity: requestedQty,
+        patientName: patientName || undefined,
+        doctorName: doctorName || undefined,
         unitPrice: effectiveUnitPrice,
         subtotal,
         discountPercent: discPct,
@@ -216,17 +239,51 @@ export async function POST(req: Request) {
       timestamp: nowIsoTimestamp,
     });
 
-    // 8. Return comprehensive deduction & financial receipt
+    // 8. Calculate total remaining stock across all valid unexpired batches for this medicine
+    const updatedBatches = await db
+      .select()
+      .from(batches)
+      .where(
+        and(
+          eq(batches.shopId, shopId),
+          eq(batches.medicineId, med.id),
+          gt(batches.quantity, 0)
+        )
+      );
+
+    const remainingStock = updatedBatches
+      .filter((b) => b.expiryDate >= todayStr)
+      .reduce((sum, b) => sum + b.quantity, 0);
+
+    let lowStockAlertTriggered = false;
+    if (remainingStock <= med.reorderThreshold) {
+      lowStockAlertTriggered = true;
+      // Trigger background email alert dispatch
+      sendLowStockAlertEmail({
+        shopId,
+        medicineName: med.name,
+        currentStock: remainingStock,
+        reorderThreshold: med.reorderThreshold,
+        manufacturer: med.manufacturer,
+      }).catch((err) => console.error("Async low stock email error:", err));
+    }
+
+    // 9. Return comprehensive deduction & financial receipt
     return NextResponse.json({
       success: true,
       medicineName: med.name,
       requestedQuantity: requestedQty,
+      patientName: patientName || null,
+      doctorName: doctorName || null,
       unitPrice: effectiveUnitPrice,
       subtotal,
       discountPercent: discPct,
       discountAmount,
       totalPrice: totalSaleAmount,
       deductions,
+      remainingStock,
+      reorderThreshold: med.reorderThreshold,
+      lowStockAlertTriggered,
       createdAt: nowIsoTimestamp,
     });
   } catch (error: unknown) {
@@ -234,3 +291,4 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
+

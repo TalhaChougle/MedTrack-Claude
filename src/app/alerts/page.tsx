@@ -12,6 +12,9 @@ import {
   AlertCircle,
   Info,
   X,
+  Mail,
+  Settings,
+  Send,
 } from "lucide-react";
 
 export default function ExpiryAlertsPage() {
@@ -21,6 +24,16 @@ export default function ExpiryAlertsPage() {
   const [alertsList, setAlertsList] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<string>("ALL");
+
+  // Email Notification Settings State
+  const [alertEmail, setAlertEmail] = useState("");
+  const [enableLowStockEmails, setEnableLowStockEmails] = useState(true);
+  const [enableIncomingOrderEmails, setEnableIncomingOrderEmails] = useState(true);
+  const [emailLogsList, setEmailLogsList] = useState<any[]>([]);
+  const [loadingSettings, setLoadingSettings] = useState(false);
+  const [savingSettings, setSavingSettings] = useState(false);
+  const [settingsSuccessMsg, setSettingsSuccessMsg] = useState("");
+  const [settingsErrorMsg, setSettingsErrorMsg] = useState("");
 
   // Wastage write-off modal
   const [wastageModalOpen, setWastageModalOpen] = useState(false);
@@ -36,6 +49,7 @@ export default function ExpiryAlertsPage() {
       router.push("/login");
     } else if (status === "authenticated") {
       fetchAlerts();
+      fetchAlertSettings();
     }
   }, [status, router]);
 
@@ -64,6 +78,59 @@ export default function ExpiryAlertsPage() {
       console.error(e);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchAlertSettings = async () => {
+    setLoadingSettings(true);
+    try {
+      const res = await fetch("/api/alerts/settings");
+      if (res.ok) {
+        const data = await res.json();
+        if (data.settings) {
+          setAlertEmail(data.settings.alertEmail || "");
+          setEnableLowStockEmails(Boolean(data.settings.enableLowStockEmails));
+          setEnableIncomingOrderEmails(Boolean(data.settings.enableIncomingOrderEmails));
+        }
+        if (data.logs) {
+          setEmailLogsList(data.logs);
+        }
+      }
+    } catch (e) {
+      console.error("Failed to fetch alert settings:", e);
+    } finally {
+      setLoadingSettings(false);
+    }
+  };
+
+  const handleSaveAlertSettings = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavingSettings(true);
+    setSettingsSuccessMsg("");
+    setSettingsErrorMsg("");
+
+    try {
+      const res = await fetch("/api/alerts/settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          alertEmail,
+          enableLowStockEmails,
+          enableIncomingOrderEmails,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setSettingsErrorMsg(data.error || "Failed to save alert settings.");
+      } else {
+        setSettingsSuccessMsg("Email alert notification settings saved successfully!");
+        fetchAlertSettings();
+      }
+    } catch (err) {
+      setSettingsErrorMsg("Network error saving alert settings.");
+    } finally {
+      setSavingSettings(false);
     }
   };
 
@@ -261,26 +328,178 @@ export default function ExpiryAlertsPage() {
           </span>
         </button>
 
-        {/* Healthy */}
+        {/* Email Notification Settings & Logs */}
         <button
-          onClick={() => setActiveTab("healthy")}
+          onClick={() => setActiveTab("email-settings")}
           className={`px-3.5 py-2 rounded-xl text-xs font-extrabold whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer ${
-            activeTab === "healthy"
-              ? "bg-emerald-600 text-white shadow-xs"
-              : "bg-emerald-50 hover:bg-emerald-100/80 text-emerald-800 font-bold"
+            activeTab === "email-settings"
+              ? "bg-[#1BA6C4] text-white shadow-xs"
+              : "bg-cyan-50 hover:bg-cyan-100/80 text-[#1BA6C4] font-bold"
           }`}
         >
-          <CheckCircle2 className={`w-4 h-4 ${activeTab === "healthy" ? "text-white" : "text-emerald-600"}`} />
-          <span>61+ Days Healthy</span>
+          <Mail className={`w-4 h-4 ${activeTab === "email-settings" ? "text-white" : "text-[#1BA6C4]"}`} />
+          <span>Email Alert Settings & Logs</span>
           <span
             className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold ${
-              activeTab === "healthy" ? "bg-white/20 text-white" : "bg-emerald-200/80 text-emerald-900"
+              activeTab === "email-settings" ? "bg-white/20 text-white" : "bg-cyan-200 text-cyan-900"
             }`}
           >
-            {counts.healthy}
+            {emailLogsList.length}
           </span>
         </button>
       </div>
+
+      {/* EMAIL SETTINGS & LOGS TAB CONTENT */}
+      {activeTab === "email-settings" && (
+        <div className="space-y-6 animate-in fade-in duration-200">
+          {/* Email Settings Configuration Card */}
+          <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-xs space-y-5">
+            <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
+              <div className="w-10 h-10 rounded-2xl bg-cyan-50 text-[#1BA6C4] flex items-center justify-center font-bold">
+                <Settings className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-base font-extrabold text-[#1E3A5F]">Custom Email Alert Configuration</h3>
+                <p className="text-xs text-slate-500">
+                  Configure automated email notifications for low medicine stock and incoming stock order updates.
+                </p>
+              </div>
+            </div>
+
+            {settingsErrorMsg && (
+              <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-rose-500 shrink-0" />
+                <span>{settingsErrorMsg}</span>
+              </div>
+            )}
+
+            {settingsSuccessMsg && (
+              <div className="p-3.5 rounded-2xl bg-teal-50 border border-teal-200 text-teal-800 text-xs font-semibold flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-teal-600 shrink-0" />
+                <span>{settingsSuccessMsg}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleSaveAlertSettings} className="space-y-5">
+              <div>
+                <label className="block text-xs font-bold text-[#1E3A5F] uppercase tracking-wider mb-1.5">
+                  Medical Staff Alert Email Address *
+                </label>
+                <div className="relative">
+                  <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="email"
+                    required
+                    value={alertEmail}
+                    onChange={(e) => setAlertEmail(e.target.value)}
+                    placeholder="e.g. staff@pharmacy.com"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-10 pr-4 py-3 text-xs font-semibold text-slate-800 focus:outline-none focus:border-cyan-600 shadow-2xs"
+                  />
+                </div>
+                <span className="text-[11px] text-slate-500 mt-1 block">
+                  Automated inventory stock notifications and order confirmations will be sent to this email address.
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <label className="flex items-start gap-3 p-4 rounded-2xl bg-slate-50 border border-slate-200 cursor-pointer hover:border-cyan-300 transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={enableLowStockEmails}
+                    onChange={(e) => setEnableLowStockEmails(e.target.checked)}
+                    className="mt-0.5 w-4 h-4 text-cyan-600 rounded-md focus:ring-cyan-500"
+                  />
+                  <div>
+                    <span className="text-xs font-extrabold text-[#1E3A5F] block">
+                      Low Medicine Stock Email Alerts
+                    </span>
+                    <span className="text-[11px] text-slate-500 font-medium">
+                      Trigger automated email alerts whenever a medicine's stock drops to or below its custom reorder threshold.
+                    </span>
+                  </div>
+                </label>
+
+                <label className="flex items-start gap-3 p-4 rounded-2xl bg-slate-50 border border-slate-200 cursor-pointer hover:border-cyan-300 transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={enableIncomingOrderEmails}
+                    onChange={(e) => setEnableIncomingOrderEmails(e.target.checked)}
+                    className="mt-0.5 w-4 h-4 text-cyan-600 rounded-md focus:ring-cyan-500"
+                  />
+                  <div>
+                    <span className="text-xs font-extrabold text-[#1E3A5F] block">
+                      Incoming Stock Order Email Alerts
+                    </span>
+                    <span className="text-[11px] text-slate-500 font-medium">
+                      Receive email confirmation & arrival alerts when medical staff orders new incoming medicine stock.
+                    </span>
+                  </div>
+                </label>
+              </div>
+
+              <button
+                type="submit"
+                disabled={savingSettings}
+                className="px-6 py-3 rounded-2xl bg-[#1BA6C4] hover:bg-[#158fa9] text-white font-extrabold text-xs shadow-md transition-all cursor-pointer flex items-center gap-2"
+              >
+                <Send className="w-4 h-4" />
+                <span>Save Alert Settings</span>
+              </button>
+            </form>
+          </div>
+
+          {/* Dispatched Email Alert Logs */}
+          <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-xs space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <h3 className="text-base font-extrabold text-[#1E3A5F]">Dispatched Email Alert Logs</h3>
+              <span className="text-xs text-slate-500 font-medium">
+                {emailLogsList.length} Dispatched Alerts Logged
+              </span>
+            </div>
+
+            {emailLogsList.length === 0 ? (
+              <div className="py-8 text-center text-slate-400 text-xs font-medium">
+                No email alert logs dispatched yet. Email alerts will appear here automatically when medicine stock drops or incoming orders are placed.
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {emailLogsList.map((log) => (
+                  <div
+                    key={log.id}
+                    className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
+                  >
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${
+                            log.alertType === "LOW_STOCK"
+                              ? "bg-amber-100 text-amber-800 border border-amber-200"
+                              : "bg-cyan-100 text-cyan-800 border border-cyan-200"
+                          }`}
+                        >
+                          {log.alertType === "LOW_STOCK" ? "Low Stock Alert" : "Incoming Order"}
+                        </span>
+                        <span className="font-extrabold text-[#1E3A5F]">{log.subject}</span>
+                      </div>
+                      <p className="text-slate-500 text-[11px]">
+                        Recipient: <span className="font-mono text-slate-700">{log.recipientEmail}</span>
+                      </p>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <span className="px-2 py-1 rounded-xl bg-emerald-100 text-emerald-800 font-extrabold text-[10px]">
+                        {log.status}
+                      </span>
+                      <span className="block text-[10px] text-slate-400 mt-1">
+                        {new Date(log.timestamp).toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Alert Cards Grid */}
       {loading ? (

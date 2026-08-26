@@ -16,11 +16,11 @@ export default function AppContainer({ children }: { children: React.ReactNode }
 
   return (
     <>
-      <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 min-w-0 overflow-x-hidden">
         {children}
       </main>
-      <footer className="border-t border-slate-200 bg-white py-6 text-center text-xs text-slate-500 shadow-xs">
-        <p>
+      <footer className="border-t border-slate-200 bg-white py-6 text-center text-xs text-slate-500 shadow-xs w-full">
+        <p className="px-4">
           MedTrack v2.0 • NEP Field Project Topic #23 • Authored by Talha Zahoor Ahmed Chougle
         </p>
       </footer>

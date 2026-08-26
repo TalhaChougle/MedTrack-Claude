@@ -21,6 +21,7 @@ import {
   QrCode,
   BookOpen,
   DollarSign,
+  Users,
 } from "lucide-react";
 import BarcodeScannerModal from "./BarcodeScannerModal";
 import InstructionManualModal from "./InstructionManualModal";
@@ -40,6 +41,7 @@ export default function Navbar() {
   const navItems = [
     { label: "Dashboard", href: "/", icon: LayoutDashboard },
     { label: "FEFO Dispense", href: "/sell", icon: ShoppingCart },
+    { label: "Patient Records", href: "/patients", icon: Users },
     { label: "Finance Tracker", href: "/finance", icon: DollarSign },
     { label: "Inventory", href: "/inventory", icon: Boxes },
     { label: "Expiry Alerts", href: "/alerts", icon: AlertTriangle },
@@ -59,48 +61,48 @@ export default function Navbar() {
     <>
       <header className="sticky top-0 z-40 bg-white border-b border-slate-200 text-[#1A2B3C] shadow-xs w-full">
         {/* Top Tier: Logo & Main Actions */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-b border-slate-100">
-          <div className="flex items-center justify-between h-14 gap-4">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 border-b border-slate-100 min-w-0">
+          <div className="flex items-center justify-between h-14 gap-2 sm:gap-4 min-w-0">
             {/* Brand Logo */}
-            <Link href="/" className="flex items-center gap-2.5 group shrink-0">
-              <div className="w-8 h-8 rounded-xl bg-cyan-gradient flex items-center justify-center text-white font-black shadow-md shadow-[#29C5E0]/30 group-hover:scale-105 transition-transform">
+            <Link href="/" className="flex items-center gap-2.5 group shrink-0 min-w-0">
+              <div className="w-8 h-8 rounded-xl bg-cyan-gradient flex items-center justify-center text-white font-black shadow-md shadow-[#29C5E0]/30 group-hover:scale-105 transition-transform shrink-0">
                 <Pill className="w-4 h-4 text-white" />
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-lg font-extrabold tracking-tight text-[#1A2B3C]">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="text-base sm:text-lg font-extrabold tracking-tight text-[#1A2B3C] truncate">
                   MedTrack
                 </span>
-                <span className="hidden sm:inline-flex items-center text-[9px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-cyan-50 text-[#1BA6C4] font-extrabold border border-cyan-200">
+                <span className="hidden lg:inline-flex items-center text-[9px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-cyan-50 text-[#1BA6C4] font-extrabold border border-cyan-200 shrink-0">
                   FEFO ENABLED
                 </span>
               </div>
             </Link>
 
             {/* Desktop Action Bar */}
-            <div className="hidden md:flex items-center gap-3 shrink-0">
+            <div className="hidden md:flex items-center gap-2 lg:gap-3 shrink-0 min-w-0">
               {/* Instruction Manual Trigger Button */}
               <button
                 onClick={() => setManualOpen(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-teal-50 hover:bg-teal-100/70 text-teal-800 border border-teal-200 text-xs font-bold transition-all cursor-pointer shadow-2xs"
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-teal-50 hover:bg-teal-100/70 text-teal-800 border border-teal-200 text-xs font-bold transition-all cursor-pointer shadow-2xs shrink-0"
                 title="Open MedTrack Instruction Manual & Guide"
               >
                 <BookOpen className="w-3.5 h-3.5 text-teal-600" />
-                <span>📖 Manual</span>
+                <span className="whitespace-nowrap">📖 Manual</span>
               </button>
 
               {/* Dual Scanner Segmented Control */}
-              <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
+              <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200 shrink-0">
                 <button
                   onClick={() => handleOpenScanner("check")}
-                  className="flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold text-[#1A2B3C] hover:bg-white transition-all cursor-pointer"
+                  className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold text-[#1A2B3C] hover:bg-white transition-all cursor-pointer whitespace-nowrap"
                   title="Scan barcode to check stock & expiry"
                 >
                   <QrCode className="w-3.5 h-3.5 text-[#1BA6C4]" />
-                  <span>Check Stock</span>
+                  <span>Check</span>
                 </button>
                 <button
                   onClick={() => handleOpenScanner("stockIn")}
-                  className="flex items-center gap-1.5 px-3.5 py-1 rounded-lg text-xs font-extrabold btn-primary-cyan shadow-xs hover:shadow-md transition-all cursor-pointer whitespace-nowrap"
+                  className="flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-extrabold btn-primary-cyan shadow-xs hover:shadow-md transition-all cursor-pointer whitespace-nowrap"
                   title="Scan delivery barcode to stock in new batch"
                 >
                   <Boxes className="w-3.5 h-3.5 text-white" />
@@ -109,21 +111,17 @@ export default function Navbar() {
               </div>
 
               {/* User Profile Info */}
-              <div className="flex items-center gap-2.5 pl-3 border-l border-slate-200">
-                <div className="text-right text-xs">
-                  <p className="font-extrabold text-[#1A2B3C] leading-tight">{session.user.name}</p>
-                  <div className="flex items-center justify-end gap-1.5 text-[10px] text-slate-500 font-medium mt-0.5">
-                    <Building2 className="w-3 h-3 text-slate-400" />
-                    <span className="capitalize text-[#1BA6C4] font-extrabold">Shop #{session.user.shopId}</span>
-                    <span className="text-slate-300">•</span>
-                    <span className={`capitalize font-extrabold ${isOwner ? "text-amber-600" : "text-[#1BA6C4]"}`}>
-                      {session.user.role}
-                    </span>
+              <div className="flex items-center gap-2 pl-2.5 border-l border-slate-200 shrink-0 min-w-0">
+                <div className="text-right text-xs truncate max-w-[140px] lg:max-w-none">
+                  <p className="font-extrabold text-[#1A2B3C] leading-tight truncate">{session.user.name}</p>
+                  <div className="flex items-center justify-end gap-1 text-[10px] text-slate-500 font-medium mt-0.5">
+                    <Building2 className="w-3 h-3 text-slate-400 shrink-0" />
+                    <span className="capitalize text-[#1BA6C4] font-extrabold whitespace-nowrap">Shop #{session.user.shopId}</span>
                   </div>
                 </div>
                 <button
                   onClick={() => signOut({ callbackUrl: "/login" })}
-                  className="p-1.5 rounded-xl bg-slate-100 hover:bg-rose-50 text-slate-500 hover:text-rose-600 transition-colors border border-slate-200 cursor-pointer"
+                  className="p-1.5 rounded-xl bg-slate-100 hover:bg-rose-50 text-slate-500 hover:text-rose-600 transition-colors border border-slate-200 cursor-pointer shrink-0"
                   title="Log out"
                 >
                   <LogOut className="w-3.5 h-3.5" />

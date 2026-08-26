@@ -100,11 +100,56 @@ export async function initDatabase() {
         used INTEGER NOT NULL DEFAULT 0,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       );`,
+      `CREATE TABLE IF NOT EXISTS patients (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        shop_id INTEGER NOT NULL REFERENCES shops(id) ON DELETE CASCADE,
+        name TEXT NOT NULL,
+        phone TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      );`,
+      `CREATE TABLE IF NOT EXISTS alert_settings (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        shop_id INTEGER NOT NULL UNIQUE REFERENCES shops(id) ON DELETE CASCADE,
+        alert_email TEXT,
+        enable_low_stock_emails INTEGER NOT NULL DEFAULT 1,
+        enable_incoming_order_emails INTEGER NOT NULL DEFAULT 1,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      );`,
+      `CREATE TABLE IF NOT EXISTS email_logs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        shop_id INTEGER NOT NULL REFERENCES shops(id) ON DELETE CASCADE,
+        recipient_email TEXT NOT NULL,
+        subject TEXT NOT NULL,
+        alert_type TEXT NOT NULL,
+        content TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'SENT',
+        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+      );`,
+      `CREATE TABLE IF NOT EXISTS sales (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        shop_id INTEGER NOT NULL REFERENCES shops(id) ON DELETE CASCADE,
+        user_id INTEGER REFERENCES users(id),
+        patient_id INTEGER REFERENCES patients(id) ON DELETE SET NULL,
+        patient_name TEXT,
+        doctor_name TEXT,
+        medicine_id INTEGER NOT NULL REFERENCES medicines(id) ON DELETE CASCADE,
+        medicine_name TEXT NOT NULL,
+        quantity INTEGER NOT NULL,
+        unit_price REAL NOT NULL,
+        subtotal REAL NOT NULL DEFAULT 0,
+        discount_percent REAL NOT NULL DEFAULT 0,
+        discount_amount REAL NOT NULL DEFAULT 0,
+        total_price REAL NOT NULL,
+        batch_details TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      );`,
       `CREATE INDEX IF NOT EXISTS idx_users_shop ON users(shop_id);`,
       `CREATE INDEX IF NOT EXISTS idx_medicines_shop ON medicines(shop_id);`,
       `CREATE INDEX IF NOT EXISTS idx_medicines_barcode ON medicines(shop_id, barcode);`,
       `CREATE INDEX IF NOT EXISTS idx_batches_shop ON batches(shop_id);`,
       `CREATE INDEX IF NOT EXISTS idx_batches_expiry ON batches(medicine_id, expiry_date);`,
+      `CREATE INDEX IF NOT EXISTS idx_patients_shop ON patients(shop_id);`,
+      `CREATE INDEX IF NOT EXISTS idx_sales_patient ON sales(patient_id);`,
       `CREATE INDEX IF NOT EXISTS idx_audit_shop ON audit_logs(shop_id);`,
       `CREATE INDEX IF NOT EXISTS idx_reset_email ON password_reset_tokens(email);`,
       `INSERT OR IGNORE INTO shops (id, name, address, phone) VALUES (1, 'Apex MedTrack Pharmacy', '123 Health Ave', '+1-800-555-MEDS');`,
@@ -113,6 +158,17 @@ export async function initDatabase() {
         args: [defaultAdminHash],
       }
     ], "write");
+
+    // Dynamic column migrations for SQLite table alterations
+    try {
+      await client.execute("ALTER TABLE sales ADD COLUMN patient_id INTEGER REFERENCES patients(id) ON DELETE SET NULL;");
+    } catch { /* Column may already exist */ }
+    try {
+      await client.execute("ALTER TABLE sales ADD COLUMN patient_name TEXT;");
+    } catch { /* Column may already exist */ }
+    try {
+      await client.execute("ALTER TABLE sales ADD COLUMN doctor_name TEXT;");
+    } catch { /* Column may already exist */ }
 
     return { success: true, message: "Database schema initialized successfully." };
   } catch (err: unknown) {

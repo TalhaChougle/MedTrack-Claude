@@ -50,6 +50,8 @@ export async function GET() {
         discountPercent: sales.discountPercent,
         discountAmount: sales.discountAmount,
         totalPrice: sales.totalPrice,
+        patientName: sales.patientName,
+        doctorName: sales.doctorName,
         batchDetails: sales.batchDetails,
         createdAt: sales.createdAt,
         userName: users.name,

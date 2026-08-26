@@ -3,6 +3,7 @@ import { getAuthSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { incomingOrders, medicines, auditLogs } from "@/lib/db/schema";
 import { eq, and, desc } from "drizzle-orm";
+import { sendIncomingOrderAlertEmail } from "@/lib/emailService";
 
 export async function GET() {
   const session = await getAuthSession();
@@ -106,6 +107,16 @@ export async function POST(req: Request) {
         supplier: newOrder.supplier,
       }),
     });
+
+    // Trigger email alert notification to medical staff for incoming stock order
+    sendIncomingOrderAlertEmail({
+      shopId,
+      medicineName: med.name,
+      expectedQuantity: qty,
+      expectedArrivalDate: newOrder.expectedArrivalDate,
+      supplier: newOrder.supplier,
+      status: newOrder.status,
+    }).catch((err) => console.error("Async incoming order email alert error:", err));
 
     return NextResponse.json(newOrder, { status: 201 });
   } catch (error: unknown) {

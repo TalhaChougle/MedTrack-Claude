@@ -346,17 +346,17 @@ export default function InventoryPage() {
                 {/* Row Header */}
                 <div
                   onClick={() => setExpandedMedId(isExpanded ? null : med.id)}
-                  className="p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 cursor-pointer select-none"
+                  className="p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 cursor-pointer select-none min-w-0"
                 >
-                  <div className="flex items-start sm:items-center gap-3">
+                  <div className="flex items-start sm:items-center gap-3 min-w-0">
                     <div className="p-2.5 rounded-xl bg-slate-100 text-[#1E3A5F] shrink-0 mt-0.5 sm:mt-0">
                       {isExpanded ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
                     </div>
-                    <div>
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="text-base font-extrabold text-[#1E3A5F]">{med.name}</h3>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap min-w-0">
+                        <h3 className="text-base font-extrabold text-[#1E3A5F] truncate">{med.name}</h3>
                         <span
-                          className={`px-2 py-0.5 rounded text-[10px] font-extrabold ${
+                          className={`px-2 py-0.5 rounded text-[10px] font-extrabold shrink-0 ${
                             med.schedule === "OTC"
                               ? "bg-teal-50 text-teal-800 border border-teal-200"
                               : med.schedule === "H" || med.schedule === "H1"
@@ -367,16 +367,16 @@ export default function InventoryPage() {
                           Schedule {med.schedule}
                         </span>
                         {med.barcode ? (
-                          <span className="px-2 py-0.5 rounded text-[10px] font-extrabold bg-teal-100 text-teal-800 border border-teal-200">
+                          <span className="px-2 py-0.5 rounded text-[10px] font-extrabold bg-teal-100 text-teal-800 border border-teal-200 shrink-0">
                             ⚡ Barcoded
                           </span>
                         ) : (
-                          <span className="px-2 py-0.5 rounded text-[10px] font-extrabold bg-slate-100 text-slate-700 border border-slate-200">
+                          <span className="px-2 py-0.5 rounded text-[10px] font-extrabold bg-slate-100 text-slate-700 border border-slate-200 shrink-0">
                             ✍️ Non-Barcoded (Manual)
                           </span>
                         )}
                       </div>
-                      <p className="text-xs text-slate-500 font-medium mt-0.5">
+                      <p className="text-xs text-slate-500 font-medium mt-0.5 truncate">
                         {med.manufacturer} • Barcode: {med.barcode || "None (Manual)"} • Selling Price: ₹{med.unitPrice}
                       </p>
                     </div>

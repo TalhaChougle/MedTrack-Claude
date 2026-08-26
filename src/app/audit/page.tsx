@@ -47,7 +47,7 @@ export default function AuditExportsPage() {
     }
   };
 
-  const handleDownload = (type: "expiry" | "wastage" | "audit", format: "excel" | "csv" = "excel") => {
+  const handleDownload = (type: "sales" | "expiry" | "wastage" | "audit", format: "excel" | "csv" = "excel") => {
     window.open(`/api/export?type=${type}&format=${format}`, "_blank");
   };
 
@@ -140,6 +140,34 @@ export default function AuditExportsPage() {
 
         <div className="p-6 rounded-3xl bg-white border border-slate-200 space-y-4 flex flex-col justify-between shadow-xs">
           <div className="space-y-2">
+            <span className="px-2.5 py-0.5 rounded text-[10px] font-extrabold bg-cyan-50 text-cyan-800 border border-cyan-200">
+              Sales & Invoice Register
+            </span>
+            <h3 className="text-lg font-extrabold text-[#1E3A5F]">Sales & Invoices Report</h3>
+            <p className="text-xs text-slate-500 font-medium">
+              Complete dispensing log including Patient Name, Prescribing Doctor Name, Date & Time, Medicine Sold, Price, and Discounts.
+            </p>
+          </div>
+          <div className="space-y-2">
+            <button
+              onClick={() => handleDownload("sales", "excel")}
+              className="w-full py-2.5 rounded-2xl bg-[#1BA6C4] hover:bg-[#158fa9] text-white font-extrabold text-xs flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer"
+            >
+              <FileSpreadsheet className="w-4 h-4 text-white" />
+              <span>Download Excel (.xls)</span>
+            </button>
+            <button
+              onClick={() => handleDownload("sales", "csv")}
+              className="w-full py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-[11px] flex items-center justify-center gap-1.5 border border-slate-200 transition-all cursor-pointer"
+            >
+              <Download className="w-3.5 h-3.5 text-slate-500" />
+              <span>Download CSV (.csv)</span>
+            </button>
+          </div>
+        </div>
+
+        <div className="p-6 rounded-3xl bg-white border border-slate-200 space-y-4 flex flex-col justify-between shadow-xs">
+          <div className="space-y-2">
             <span className="px-2.5 py-0.5 rounded text-[10px] font-extrabold bg-teal-50 text-teal-800 border border-teal-200">
               Schedule H Compliance
             </span>
@@ -216,8 +244,8 @@ export default function AuditExportsPage() {
                     Entity: {log.entityType} #{log.entityId}
                   </p>
 
-                  <div className="p-2.5 rounded-xl bg-white border border-slate-200 text-[11px] text-slate-700 overflow-x-auto shadow-2xs">
-                    <pre className="whitespace-pre-wrap">{JSON.stringify(parsedDetail, null, 2)}</pre>
+                  <div className="p-2.5 rounded-xl bg-white border border-slate-200 text-[11px] text-slate-700 overflow-x-auto max-w-full shadow-2xs">
+                    <pre className="whitespace-pre-wrap break-words max-w-full font-mono">{JSON.stringify(parsedDetail, null, 2)}</pre>
                   </div>
                 </div>
               );

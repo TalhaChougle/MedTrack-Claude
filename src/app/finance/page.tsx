@@ -18,6 +18,7 @@ import {
   AlertCircle,
   Pill,
   Users,
+  Download,
 } from "lucide-react";
 
 export default function FinanceTrackerPage() {
@@ -28,6 +29,10 @@ export default function FinanceTrackerPage() {
   const [financeData, setFinanceData] = useState<any>(null);
   const [timeFilter, setTimeFilter] = useState<"all" | "today" | "week" | "month">("all");
   const [searchQuery, setSearchQuery] = useState("");
+
+  const handleExportSales = (format: "excel" | "csv") => {
+    window.open(`/api/export?type=sales&format=${format}`, "_blank");
+  };
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -334,21 +339,42 @@ export default function FinanceTrackerPage() {
             </button>
           </div>
 
-          {/* Search Box */}
-          <div className="relative w-full md:w-72">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
-            <input
-              type="text"
-              placeholder="Search by medicine, staff, batch..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-10 pr-4 py-2.5 text-xs font-medium text-slate-800 placeholder-slate-400 focus:outline-none focus:border-teal-600"
-            />
+          {/* Search Box & Export Actions */}
+          <div className="flex flex-col sm:flex-row items-center gap-2 w-full md:w-auto">
+            <div className="relative w-full sm:w-64">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+              <input
+                type="text"
+                placeholder="Search medicine, patient, doctor..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-10 pr-4 py-2.5 text-xs font-medium text-slate-800 placeholder-slate-400 focus:outline-none focus:border-teal-600"
+              />
+            </div>
+
+            <div className="flex items-center gap-1.5 w-full sm:w-auto shrink-0">
+              <button
+                onClick={() => handleExportSales("excel")}
+                className="flex-1 sm:flex-none px-3.5 py-2.5 rounded-2xl bg-teal-600 hover:bg-teal-700 text-white font-extrabold text-xs flex items-center justify-center gap-1.5 shadow-xs transition-all cursor-pointer"
+                title="Export Sales Report with Patient, Doctor, Date, Prices, and Discounts to Excel"
+              >
+                <FileSpreadsheet className="w-3.5 h-3.5 text-white" />
+                <span>Export Excel</span>
+              </button>
+              <button
+                onClick={() => handleExportSales("csv")}
+                className="flex-1 sm:flex-none px-3 py-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs flex items-center justify-center gap-1 border border-slate-200 transition-all cursor-pointer"
+                title="Export Sales Report to CSV"
+              >
+                <Download className="w-3.5 h-3.5 text-slate-500" />
+                <span>CSV</span>
+              </button>
+            </div>
           </div>
         </div>
 
         {/* Transactions Table */}
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto min-w-0 max-w-full rounded-2xl border border-slate-200 shadow-2xs">
           {filteredTransactions.length === 0 ? (
             <div className="py-12 text-center space-y-2">
               <Pill className="w-10 h-10 text-slate-300 mx-auto" />
@@ -360,11 +386,12 @@ export default function FinanceTrackerPage() {
               </p>
             </div>
           ) : (
-            <table className="w-full text-left border-collapse text-xs">
+            <table className="w-full min-w-[950px] text-left border-collapse text-xs">
               <thead>
                 <tr className="border-b border-slate-200 bg-slate-50/70 text-slate-400 font-bold uppercase tracking-wider text-[10px]">
                   <th className="py-3 px-3">Date & Exact Time</th>
                   <th className="py-3 px-3">Medicine Name</th>
+                  <th className="py-3 px-3">Patient / Doctor</th>
                   <th className="py-3 px-3 text-center">Units</th>
                   <th className="py-3 px-3 text-right">Unit Price</th>
                   <th className="py-3 px-3 text-right">Subtotal</th>
@@ -404,6 +431,21 @@ export default function FinanceTrackerPage() {
 
                       <td className="py-3 px-3">
                         <span className="font-extrabold text-[#1E3A5F] text-sm block">{tx.medicineName}</span>
+                      </td>
+
+                      <td className="py-3 px-3">
+                        {tx.patientName || tx.doctorName ? (
+                          <div className="space-y-0.5 text-[11px]">
+                            {tx.patientName && (
+                              <span className="font-extrabold text-slate-800 block">Pt: {tx.patientName}</span>
+                            )}
+                            {tx.doctorName && (
+                              <span className="text-slate-500 font-medium block">Dr: {tx.doctorName}</span>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-slate-400 text-[11px] font-medium">—</span>
+                        )}
                       </td>
 
                       <td className="py-3 px-3 text-center whitespace-nowrap font-bold text-slate-800">

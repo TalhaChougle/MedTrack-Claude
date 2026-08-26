@@ -105,12 +105,50 @@ export const scannerSessions = sqliteTable("scanner_sessions", {
   createdAt: integer("created_at").notNull(),
 });
 
+export const patients = sqliteTable("patients", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  shopId: integer("shop_id")
+    .notNull()
+    .references(() => shops.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  phone: text("phone"),
+  createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`),
+});
+
+export const alertSettings = sqliteTable("alert_settings", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  shopId: integer("shop_id")
+    .notNull()
+    .unique()
+    .references(() => shops.id, { onDelete: "cascade" }),
+  alertEmail: text("alert_email"),
+  enableLowStockEmails: integer("enable_low_stock_emails", { mode: "boolean" }).default(true).notNull(),
+  enableIncomingOrderEmails: integer("enable_incoming_order_emails", { mode: "boolean" }).default(true).notNull(),
+  createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`),
+});
+
+export const emailLogs = sqliteTable("email_logs", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  shopId: integer("shop_id")
+    .notNull()
+    .references(() => shops.id, { onDelete: "cascade" }),
+  recipientEmail: text("recipient_email").notNull(),
+  subject: text("subject").notNull(),
+  alertType: text("alert_type").notNull(), // LOW_STOCK | INCOMING_ORDER
+  content: text("content").notNull(),
+  status: text("status").default("SENT").notNull(),
+  timestamp: text("timestamp").default(sql`CURRENT_TIMESTAMP`),
+});
+
 export const sales = sqliteTable("sales", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   shopId: integer("shop_id")
     .notNull()
     .references(() => shops.id, { onDelete: "cascade" }),
   userId: integer("user_id").references(() => users.id),
+  patientId: integer("patient_id").references(() => patients.id, { onDelete: "set null" }),
+  patientName: text("patient_name"),
+  doctorName: text("doctor_name"),
   medicineId: integer("medicine_id")
     .notNull()
     .references(() => medicines.id, { onDelete: "cascade" }),
@@ -133,4 +171,5 @@ export const passwordResetTokens = sqliteTable("password_reset_tokens", {
   used: integer("used", { mode: "boolean" }).default(false).notNull(),
   createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`),
 });
+
 
