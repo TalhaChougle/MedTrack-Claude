@@ -36,7 +36,12 @@ export async function GET(req: Request) {
             createdAt: sales.createdAt,
           })
           .from(sales)
-          .where(and(eq(sales.shopId, shopId), eq(sales.patientId, p.id)))
+          .where(
+            and(
+              eq(sales.shopId, shopId),
+              sql`(${sales.patientId} = ${p.id} OR LOWER(${sales.patientName}) = LOWER(${p.name}))`
+            )
+          )
           .orderBy(desc(sales.createdAt));
 
         const totalOrders = patientSales.length;

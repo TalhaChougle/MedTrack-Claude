@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getAuthSession } from "@/lib/auth";
 import { db, client } from "@/lib/db";
 import { medicines, batches, auditLogs, sales, patients } from "@/lib/db/schema";
-import { eq, and, asc, gt } from "drizzle-orm";
+import { eq, and, asc, gt, sql } from "drizzle-orm";
 import { sendLowStockAlertEmail } from "@/lib/emailService";
 
 export async function POST(req: Request) {
@@ -131,7 +131,7 @@ export async function POST(req: Request) {
         const existingPatients = await db
           .select()
           .from(patients)
-          .where(and(eq(patients.shopId, shopId), eq(patients.name, patientName)));
+          .where(and(eq(patients.shopId, shopId), sql`LOWER(${patients.name}) = LOWER(${patientName})`));
 
         if (existingPatients.length > 0) {
           patientId = existingPatients[0].id;

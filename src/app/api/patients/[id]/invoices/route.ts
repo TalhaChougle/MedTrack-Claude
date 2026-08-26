@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getAuthSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { patients, sales, shops } from "@/lib/db/schema";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, sql } from "drizzle-orm";
 
 export async function GET(
   req: Request,
@@ -39,7 +39,12 @@ export async function GET(
     const patientInvoices = await db
       .select()
       .from(sales)
-      .where(and(eq(sales.shopId, shopId), eq(sales.patientId, patientId)))
+      .where(
+        and(
+          eq(sales.shopId, shopId),
+          sql`(${sales.patientId} = ${patientId} OR LOWER(${sales.patientName}) = LOWER(${patient.name}))`
+        )
+      )
       .orderBy(desc(sales.createdAt));
 
     return NextResponse.json({
