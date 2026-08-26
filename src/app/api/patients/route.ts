@@ -11,7 +11,7 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const shopId = session.user.shopId;
+  const shopId = Number(session.user?.shopId) || 1;
   const { searchParams } = new URL(req.url);
   const q = searchParams.get("q") || "";
 
@@ -29,8 +29,8 @@ export async function GET(req: Request) {
       .from(patients)
       .where(
         q
-          ? and(eq(patients.shopId, shopId), like(patients.name, `%${q}%`))
-          : eq(patients.shopId, shopId)
+          ? and(sql`(${patients.shopId} = ${shopId} OR ${patients.shopId} IS NULL)`, like(patients.name, `%${q}%`))
+          : sql`(${patients.shopId} = ${shopId} OR ${patients.shopId} IS NULL)`
       )
       .orderBy(desc(patients.createdAt));
 
@@ -42,7 +42,7 @@ export async function GET(req: Request) {
       .from(sales)
       .where(
         and(
-          eq(sales.shopId, shopId),
+          sql`(${sales.shopId} = ${shopId} OR ${sales.shopId} IS NULL)`,
           sql`${sales.patientName} IS NOT NULL AND ${sales.patientName} != ''`
         )
       )
@@ -73,8 +73,8 @@ export async function GET(req: Request) {
       .from(patients)
       .where(
         q
-          ? and(eq(patients.shopId, shopId), like(patients.name, `%${q}%`))
-          : eq(patients.shopId, shopId)
+          ? and(sql`(${patients.shopId} = ${shopId} OR ${patients.shopId} IS NULL)`, like(patients.name, `%${q}%`))
+          : sql`(${patients.shopId} = ${shopId} OR ${patients.shopId} IS NULL)`
       )
       .orderBy(desc(patients.createdAt));
 
@@ -90,7 +90,7 @@ export async function GET(req: Request) {
           .from(sales)
           .where(
             and(
-              eq(sales.shopId, shopId),
+              sql`(${sales.shopId} = ${shopId} OR ${sales.shopId} IS NULL)`,
               sql`(${sales.patientId} = ${p.id} OR LOWER(${sales.patientName}) = LOWER(${p.name}))`
             )
           )

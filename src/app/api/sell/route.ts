@@ -11,7 +11,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const shopId = session.user.shopId;
+  const shopId = Number(session.user?.shopId) || 1;
   const userId = parseInt(session.user.id);
 
   try {

@@ -13,7 +13,7 @@ export async function GET(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const shopId = session.user.shopId;
+  const shopId = Number(session.user?.shopId) || 1;
   const { id } = await params;
   const patientId = parseInt(id);
 
