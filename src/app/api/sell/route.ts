@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAuthSession } from "@/lib/auth";
 import { db, client } from "@/lib/db";
-import { medicines, batches, auditLogs, sales, patients } from "@/lib/db/schema";
+import { medicines, batches, auditLogs, sales, patients, users } from "@/lib/db/schema";
 import { eq, and, asc, gt, sql } from "drizzle-orm";
 import { sendLowStockAlertEmail } from "@/lib/emailService";
 
@@ -199,12 +199,32 @@ export async function POST(req: Request) {
     const totalSaleAmount = Math.round((subtotal - discountAmount) * 100) / 100;
     const nowIsoTimestamp = new Date().toISOString();
 
-    // 6. Record sale entry into sales table
+    // 6. Validate Foreign Keys & Record sale entry into sales table
+    let safeUserId: number | null = !isNaN(userId) ? userId : null;
+    if (safeUserId) {
+      try {
+        const u = await db.select({ id: users.id }).from(users).where(eq(users.id, safeUserId));
+        if (u.length === 0) safeUserId = null;
+      } catch (e) {
+        safeUserId = null;
+      }
+    }
+
+    let safePatientId: number | null = patientId;
+    if (safePatientId) {
+      try {
+        const p = await db.select({ id: patients.id }).from(patients).where(eq(patients.id, safePatientId));
+        if (p.length === 0) safePatientId = null;
+      } catch (e) {
+        safePatientId = null;
+      }
+    }
+
     try {
       await db.insert(sales).values({
         shopId,
-        userId,
-        patientId,
+        userId: safeUserId,
+        patientId: safePatientId,
         patientName: patientName || null,
         doctorName: doctorName || null,
         medicineId: med.id,
@@ -219,7 +239,35 @@ export async function POST(req: Request) {
         createdAt: nowIsoTimestamp,
       });
     } catch (e) {
-      console.error("Failed to insert sales table entry:", e);
+      console.warn("Drizzle sales table insertion failed, executing raw SQL fallback:", e);
+      try {
+        await client.execute({
+          sql: `INSERT INTO sales (
+            shop_id, user_id, patient_id, patient_name, doctor_name,
+            medicine_id, medicine_name, quantity, unit_price, subtotal,
+            discount_percent, discount_amount, total_price, batch_details, created_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          args: [
+            shopId,
+            safeUserId,
+            safePatientId,
+            patientName || null,
+            doctorName || null,
+            med.id,
+            med.name,
+            requestedQty,
+            effectiveUnitPrice,
+            subtotal,
+            discPct,
+            discountAmount,
+            totalSaleAmount,
+            JSON.stringify(deductions),
+            nowIsoTimestamp,
+          ],
+        });
+      } catch (sqlErr) {
+        console.error("Critical: Raw SQL sales insertion failed:", sqlErr);
+      }
     }
 
     // 7. Write audit log entry

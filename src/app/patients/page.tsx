@@ -44,6 +44,16 @@ export default function PatientRecordsPage() {
   }, [status, router]);
 
   useEffect(() => {
+    const handleRefresh = () => {
+      fetchPatients(searchQuery);
+    };
+    window.addEventListener("medtrack:refresh", handleRefresh);
+    return () => {
+      window.removeEventListener("medtrack:refresh", handleRefresh);
+    };
+  }, [searchQuery]);
+
+  useEffect(() => {
     if (invoiceModalOpen) {
       document.body.style.overflow = "hidden";
       document.documentElement.style.overflow = "hidden";
