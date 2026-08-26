@@ -136,16 +136,22 @@ export async function POST(req: Request) {
         if (existingPatients.length > 0) {
           patientId = existingPatients[0].id;
         } else {
-          const inserted = await db
-            .insert(patients)
-            .values({
-              shopId,
-              name: patientName,
-            })
-            .returning({ id: patients.id });
-          
-          if (inserted.length > 0) {
-            patientId = inserted[0].id;
+          try {
+            await client.execute({
+              sql: "INSERT INTO patients (shop_id, name) VALUES (?, ?)",
+              args: [shopId, patientName],
+            });
+          } catch (e) {
+            console.warn("Patient direct insert warning:", e);
+          }
+
+          const newPatients = await db
+            .select()
+            .from(patients)
+            .where(and(eq(patients.shopId, shopId), sql`LOWER(${patients.name}) = LOWER(${patientName})`));
+
+          if (newPatients.length > 0) {
+            patientId = newPatients[0].id;
           }
         }
       } catch (err) {
