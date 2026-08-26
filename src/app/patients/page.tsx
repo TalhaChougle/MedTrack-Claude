@@ -203,14 +203,45 @@ export default function PatientRecordsPage() {
             Loading patient records database...
           </div>
         ) : patientsList.length === 0 ? (
-          <div className="bg-white rounded-3xl p-12 text-center border border-slate-200 space-y-4">
-            <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mx-auto text-slate-400">
+          <div className="bg-white rounded-3xl p-8 sm:p-12 text-center border border-slate-200 space-y-5 max-w-2xl mx-auto shadow-xs">
+            <div className="w-16 h-16 rounded-3xl bg-teal-50 border border-teal-200 flex items-center justify-center mx-auto text-teal-700">
               <Users className="w-8 h-8" />
             </div>
-            <h3 className="text-lg font-bold text-[#1E3A5F]">No Patient Records Found</h3>
-            <p className="text-xs text-slate-500 max-w-md mx-auto">
-              When medical staff enters a patient's name during medicine dispensing, patient records and past medicine purchase invoices will automatically appear here.
-            </p>
+            <div className="space-y-2">
+              <h3 className="text-xl font-extrabold text-[#1E3A5F]">No Patient Records Found</h3>
+              <p className="text-xs text-slate-500 max-w-md mx-auto font-medium">
+                To record a patient purchase, make sure you have added a medicine with an active unexpired batch, then type the patient's name when dispensing.
+              </p>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-left text-xs space-y-2.5 max-w-md mx-auto">
+              <p className="font-extrabold text-[#1E3A5F] uppercase tracking-wider text-[11px]">
+                📋 How to record your first patient purchase:
+              </p>
+              <ol className="list-decimal list-inside space-y-1.5 text-slate-600 font-medium">
+                <li>Go to <strong className="text-slate-800">Inventory</strong> and make sure a medicine has stock (or click <em>Add Batch</em> to add stock).</li>
+                <li>Click <strong className="text-teal-700">Dispense</strong> on the medicine.</li>
+                <li>In Step 2 of the pop-up, enter the <strong className="text-slate-800">Patient's Name</strong> (e.g. <em>Rahul Sharma</em>).</li>
+                <li>Click <strong className="text-slate-800">Complete Dispense</strong> — patient records & invoices will appear here automatically!</li>
+              </ol>
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+              <button
+                onClick={() => router.push("/inventory")}
+                className="w-full sm:w-auto px-5 py-2.5 rounded-2xl bg-[#1E3A5F] hover:bg-[#152a45] text-white font-extrabold text-xs flex items-center justify-center gap-2 shadow-xs cursor-pointer transition-all"
+              >
+                <Pill className="w-4 h-4 text-teal-300" />
+                <span>Go to Inventory to Stock Medicines</span>
+              </button>
+              <button
+                onClick={() => router.push("/sell")}
+                className="w-full sm:w-auto px-5 py-2.5 rounded-2xl bg-teal-600 hover:bg-teal-700 text-white font-extrabold text-xs flex items-center justify-center gap-2 shadow-xs cursor-pointer transition-all"
+              >
+                <span>Go to FEFO Dispense POS</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
