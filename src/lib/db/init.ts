@@ -170,6 +170,24 @@ export async function initDatabase() {
       await client.execute("ALTER TABLE sales ADD COLUMN doctor_name TEXT;");
     } catch { /* Column may already exist */ }
 
+    // Seed default sample medicine if cloud database is fresh
+    try {
+      const medCheck = await client.execute("SELECT COUNT(*) as count FROM medicines;");
+      const count = Number(medCheck.rows[0]?.count || 0);
+      if (count === 0) {
+        await client.execute({
+          sql: "INSERT INTO medicines (id, shop_id, name, barcode, manufacturer, schedule, unit_price, reorder_threshold) VALUES (1, 1, 'Paracetamol 500mg (Sample)', '8901234567890', 'Cipla Health', 'OTC', 15.0, 10);",
+          args: [],
+        });
+        await client.execute({
+          sql: "INSERT INTO batches (shop_id, medicine_id, batch_number, quantity, expiry_date, supplier, cost_price, received_date) VALUES (1, 1, 'BAT-2026-A', 100, '2028-12-31', 'Apex Med Wholesale', 10.0, '2026-08-01');",
+          args: [],
+        });
+      }
+    } catch (e) {
+      console.warn("Sample data seed warning:", e);
+    }
+
     return { success: true, message: "Database schema initialized successfully." };
   } catch (err: unknown) {
     console.error("Database initialization error:", err);
