@@ -39,16 +39,16 @@ export default function Navbar() {
   const isOwner = session.user.role === "owner";
 
   const navItems = [
-    { label: "Dashboard", href: "/", icon: LayoutDashboard },
-    { label: "FEFO Dispense", href: "/sell", icon: ShoppingCart },
-    { label: "Patient Records", href: "/patients", icon: Users },
-    { label: "Finance Tracker", href: "/finance", icon: DollarSign },
-    { label: "Inventory", href: "/inventory", icon: Boxes },
-    { label: "Expiry Alerts", href: "/alerts", icon: AlertTriangle },
-    { label: "Restock", href: "/restock", icon: RefreshCw },
-    { label: "Wastage", href: "/wastage", icon: Trash2 },
-    { label: "FDA Reference", href: "/reference", icon: Search },
-    ...(isOwner ? [{ label: "Audit & Exports", href: "/audit", icon: FileSpreadsheet }] : []),
+    { label: "Dashboard", shortLabel: "Dashboard", href: "/", icon: LayoutDashboard },
+    { label: "FEFO Dispense", shortLabel: "Dispense", href: "/sell", icon: ShoppingCart },
+    { label: "Patient Records", shortLabel: "Patients", href: "/patients", icon: Users },
+    { label: "Finance Tracker", shortLabel: "Finance", href: "/finance", icon: DollarSign },
+    { label: "Inventory", shortLabel: "Inventory", href: "/inventory", icon: Boxes },
+    { label: "Expiry Alerts", shortLabel: "Alerts", href: "/alerts", icon: AlertTriangle },
+    { label: "Restock", shortLabel: "Restock", href: "/restock", icon: RefreshCw },
+    { label: "Wastage", shortLabel: "Waste", href: "/wastage", icon: Trash2 },
+    { label: "FDA Reference", shortLabel: "FDA", href: "/reference", icon: Search },
+    ...(isOwner ? [{ label: "Audit & Exports", shortLabel: "Audit", href: "/audit", icon: FileSpreadsheet }] : []),
   ];
 
   const handleOpenScanner = (mode: "check" | "stockIn") => {
@@ -168,10 +168,10 @@ export default function Navbar() {
           </div>
         </div>
 
-        {/* Bottom Tier: Desktop Navigation Bar */}
-        <div className="hidden md:block bg-slate-50/70 border-b border-slate-200/60">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <nav className="flex items-center gap-1 overflow-x-auto py-1 scrollbar-none">
+        {/* Bottom Tier: Navigation Bar */}
+        <div className="block bg-slate-50/70 border-b border-slate-200/60">
+          <div className="max-w-7xl mx-auto px-1 sm:px-3 lg:px-8">
+            <nav className="flex items-center gap-1 overflow-x-auto py-1.5 scrollbar-none snap-x snap-mandatory">
               {navItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = pathname === item.href;
@@ -179,14 +179,15 @@ export default function Navbar() {
                   <Link
                     key={item.href}
                     href={item.href}
-                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${
+                    className={`flex items-center gap-2 px-2.5 sm:px-3 py-1.5 rounded-lg text-[10px] sm:text-xs font-bold transition-all whitespace-nowrap snap-start shrink-0 ${
                       isActive
                         ? "bg-white text-[#1BA6C4] font-extrabold shadow-2xs border border-slate-200/80"
                         : "text-slate-600 hover:text-[#1A2B3C] hover:bg-white/60"
                     }`}
                   >
                     <Icon className={`w-3.5 h-3.5 ${isActive ? "text-[#1BA6C4]" : "text-slate-400"}`} />
-                    <span>{item.label}</span>
+                    <span className="hidden sm:inline">{item.label}</span>
+                    <span className="sm:hidden">{item.shortLabel}</span>
                   </Link>
                 );
               })}

@@ -60,6 +60,38 @@ export default function InventoryPage() {
     costPrice: "",
   });
 
+  useEffect(() => {
+    if (!addBatchOpen || !selectedMedForBatch) {
+      return;
+    }
+
+    const matchingBatches = batchesList.filter((batch) => batch.medicineId === selectedMedForBatch.id);
+    if (matchingBatches.length === 0) {
+      return;
+    }
+
+    const lastBatch = [...matchingBatches].sort((a, b) => {
+      const aTime = new Date(a.receivedDate || a.expiryDate || 0).getTime();
+      const bTime = new Date(b.receivedDate || b.expiryDate || 0).getTime();
+      return bTime - aTime;
+    })[0];
+
+    if (!lastBatch) {
+      return;
+    }
+
+    setNewBatchData((prev) => ({
+      ...prev,
+      supplier: prev.supplier && prev.supplier.trim() ? prev.supplier : lastBatch.supplier || prev.supplier || "",
+      costPrice:
+        prev.costPrice && prev.costPrice !== ""
+          ? prev.costPrice
+          : lastBatch.costPrice != null
+            ? String(lastBatch.costPrice)
+            : prev.costPrice,
+    }));
+  }, [addBatchOpen, selectedMedForBatch, batchesList]);
+
   const [errorMsg, setErrorMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
@@ -657,7 +689,19 @@ export default function InventoryPage() {
                 <h3 className="text-base font-extrabold text-[#1E3A5F]">Add New Batch to Existing Medicine</h3>
                 <p className="text-xs text-slate-500 font-medium">Adding stock for medicine already in catalog</p>
               </div>
-              <button onClick={() => setAddBatchOpen(false)} className="text-slate-400 hover:text-slate-700 cursor-pointer">
+              <button
+                onClick={() => {
+                  setAddBatchOpen(false);
+                  setNewBatchData({
+                    batchNumber: "",
+                    quantity: "",
+                    expiryDate: "",
+                    supplier: "",
+                    costPrice: "",
+                  });
+                }}
+                className="text-slate-400 hover:text-slate-700 cursor-pointer"
+              >
                 <X className="w-5 h-5" />
               </button>
             </div>
