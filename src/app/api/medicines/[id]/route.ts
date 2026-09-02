@@ -5,6 +5,82 @@ import { medicines, batches, auditLogs, incomingOrders, wastageLogs } from "@/li
 import { eq, and } from "drizzle-orm";
 import { persistCurrentDatabaseState } from "@/lib/db/storeSync";
 
+export async function PATCH(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const session = await getAuthSession();
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const shopId = session.user.shopId;
+  const userId = parseInt(session.user.id);
+  const resolvedParams = await params;
+  const medId = parseInt(resolvedParams.id);
+
+  if (isNaN(medId)) {
+    return NextResponse.json({ error: "Invalid medicine ID." }, { status: 400 });
+  }
+
+  try {
+    const body = await req.json();
+    const { reorderThreshold } = body;
+
+    // Validate threshold
+    const threshold = parseInt(reorderThreshold);
+    if (isNaN(threshold) || threshold < 0) {
+      return NextResponse.json(
+        { error: "Alert threshold must be a whole number of 0 or greater." },
+        { status: 400 }
+      );
+    }
+
+    // Verify medicine belongs to this shop
+    const [med] = await db
+      .select()
+      .from(medicines)
+      .where(and(eq(medicines.id, medId), eq(medicines.shopId, shopId)));
+
+    if (!med) {
+      return NextResponse.json(
+        { error: "Medicine not found in your inventory." },
+        { status: 404 }
+      );
+    }
+
+    // Update the threshold
+    const [updated] = await db
+      .update(medicines)
+      .set({ reorderThreshold: threshold })
+      .where(and(eq(medicines.id, medId), eq(medicines.shopId, shopId)))
+      .returning();
+
+    // Audit log
+    await db.insert(auditLogs).values({
+      shopId,
+      userId,
+      action: "MEDICINE_UPDATE",
+      entityType: "medicine",
+      entityId: medId,
+      detail: JSON.stringify({
+        name: med.name,
+        previousThreshold: med.reorderThreshold,
+        newThreshold: threshold,
+      }),
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: `Low stock alert threshold updated to ${threshold} units for ${med.name}.`,
+      medicine: updated,
+    });
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : "Failed to update medicine.";
+    return NextResponse.json({ error: msg }, { status: 500 });
+  }
+}
+
 export async function DELETE(
   req: Request,
   { params }: { params: Promise<{ id: string }> }

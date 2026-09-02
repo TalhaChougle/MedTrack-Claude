@@ -108,15 +108,16 @@ export async function POST(req: Request) {
       }),
     });
 
-    // Trigger email alert notification to medical staff for incoming stock order
-    sendIncomingOrderAlertEmail({
+    // Trigger email alert notification to medical staff for incoming stock order.
+    // Awaited so Vercel does not kill the function before Brevo responds.
+    await sendIncomingOrderAlertEmail({
       shopId,
       medicineName: med.name,
       expectedQuantity: qty,
       expectedArrivalDate: newOrder.expectedArrivalDate,
       supplier: newOrder.supplier,
       status: newOrder.status,
-    }).catch((err) => console.error("Async incoming order email alert error:", err));
+    });
 
     return NextResponse.json(newOrder, { status: 201 });
   } catch (error: unknown) {

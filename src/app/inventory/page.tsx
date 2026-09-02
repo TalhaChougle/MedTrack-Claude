@@ -15,6 +15,8 @@ import {
   X,
   Trash2,
   ShoppingCart,
+  Bell,
+  Save,
 } from "lucide-react";
 import { autoClassifySchedule } from "@/lib/scheduleClassifier";
 import BatchDispenseModal from "@/components/BatchDispenseModal";
@@ -96,6 +98,12 @@ export default function InventoryPage() {
   const [successMsg, setSuccessMsg] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
 
+  // Per-medicine alert threshold editing state
+  // Maps medicineId -> { draft value string, saving flag, error, success }
+  const [thresholdDrafts, setThresholdDrafts] = useState<
+    Record<number, { value: string; saving: boolean; error: string; success: string }>
+  >({});
+
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/login");
@@ -132,6 +140,69 @@ export default function InventoryPage() {
       console.error(e);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Per-medicine threshold helpers — declared after fetchInventoryData to satisfy hoisting rules
+  const initThresholdDraft = (med: { id: number; reorderThreshold?: number }) => {
+    setThresholdDrafts((prev) => {
+      if (prev[med.id]) return prev; // already initialised for this medicine
+      return {
+        ...prev,
+        [med.id]: {
+          value: String(med.reorderThreshold ?? 10),
+          saving: false,
+          error: "",
+          success: "",
+        },
+      };
+    });
+  };
+
+  const handleSaveThreshold = async (medId: number) => {
+    const draft = thresholdDrafts[medId];
+    if (!draft) return;
+
+    const parsed = parseInt(draft.value, 10);
+    if (isNaN(parsed) || parsed < 0) {
+      setThresholdDrafts((prev) => ({
+        ...prev,
+        [medId]: { ...prev[medId], error: "Alert threshold must be 0 or greater.", success: "" },
+      }));
+      return;
+    }
+
+    setThresholdDrafts((prev) => ({
+      ...prev,
+      [medId]: { ...prev[medId], saving: true, error: "", success: "" },
+    }));
+
+    try {
+      const res = await fetch(`/api/medicines/${medId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reorderThreshold: parsed }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        setThresholdDrafts((prev) => ({
+          ...prev,
+          [medId]: { ...prev[medId], saving: false, error: data.error || "Failed to save.", success: "" },
+        }));
+      } else {
+        setThresholdDrafts((prev) => ({
+          ...prev,
+          [medId]: { ...prev[medId], saving: false, error: "", success: "Saved!" },
+        }));
+        // Refresh list so the low-stock badge reflects the new threshold
+        await fetchInventoryData();
+      }
+    } catch {
+      setThresholdDrafts((prev) => ({
+        ...prev,
+        [medId]: { ...prev[medId], saving: false, error: "Network error. Please try again.", success: "" },
+      }));
     }
   };
 
@@ -377,7 +448,11 @@ export default function InventoryPage() {
               >
                 {/* Row Header */}
                 <div
-                  onClick={() => setExpandedMedId(isExpanded ? null : med.id)}
+                  onClick={() => {
+                    const opening = expandedMedId !== med.id;
+                    setExpandedMedId(isExpanded ? null : med.id);
+                    if (opening) initThresholdDraft({ id: med.id, reorderThreshold: med.reorderThreshold });
+                  }}
                   className="p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 cursor-pointer select-none min-w-0"
                 >
                   <div className="flex items-start sm:items-center gap-3 min-w-0">
@@ -536,6 +611,90 @@ export default function InventoryPage() {
                         })}
                       </div>
                     )}
+
+                    {/* ── Per-medicine Low Stock Alert Threshold ── */}
+                    {(() => {
+                      const td = thresholdDrafts[med.id];
+                      if (!td) return null;
+                      return (
+                        <div className="mt-4 pt-4 border-t border-slate-200">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Bell className="w-4 h-4 text-amber-500 shrink-0" />
+                            <h4 className="text-xs font-extrabold text-[#1E3A5F] uppercase tracking-wider">
+                              Low Stock Alert Threshold
+                            </h4>
+                          </div>
+
+                          <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 space-y-3">
+                            <p className="text-[11px] text-amber-800 font-medium">
+                              Send a low-stock alert when stock reaches or falls below this number.
+                              Currently:{" "}
+                              <strong>{med.totalStock} units</strong> in stock.
+                              {med.totalStock <= (parseInt(td.value) || 0) && (
+                                <span className="ml-1 px-1.5 py-0.5 rounded bg-amber-200 text-amber-900 font-extrabold text-[10px]">
+                                  ⚠ CURRENTLY AT OR BELOW THRESHOLD
+                                </span>
+                              )}
+                            </p>
+
+                            <div className="flex items-end gap-3">
+                              <div className="flex-1">
+                                <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                                  Alert when stock is this many units or less:
+                                </label>
+                                <input
+                                  type="number"
+                                  min="0"
+                                  step="1"
+                                  value={td.value}
+                                  onChange={(e) =>
+                                    setThresholdDrafts((prev) => ({
+                                      ...prev,
+                                      [med.id]: {
+                                        ...prev[med.id],
+                                        value: e.target.value,
+                                        error: "",
+                                        success: "",
+                                      },
+                                    }))
+                                  }
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="w-full bg-white border border-amber-300 rounded-xl px-3 py-2 text-slate-800 font-bold text-sm focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-400"
+                                  placeholder="e.g. 10"
+                                />
+                              </div>
+
+                              <button
+                                type="button"
+                                disabled={td.saving}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleSaveThreshold(med.id);
+                                }}
+                                className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white font-extrabold text-xs flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer shrink-0"
+                              >
+                                <Save className="w-3.5 h-3.5" />
+                                <span>{td.saving ? "Saving…" : "Save"}</span>
+                              </button>
+                            </div>
+
+                            {td.error && (
+                              <p className="text-[11px] text-rose-700 font-semibold flex items-center gap-1">
+                                <AlertTriangle className="w-3 h-3 shrink-0" />
+                                {td.error}
+                              </p>
+                            )}
+
+                            {td.success && (
+                              <p className="text-[11px] text-teal-700 font-semibold flex items-center gap-1">
+                                <CheckCircle2 className="w-3 h-3 shrink-0" />
+                                {td.success} Threshold for {med.name} saved as {td.value} units.
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })()}
                   </div>
                 )}
               </div>
@@ -824,7 +983,7 @@ export default function InventoryPage() {
             </div>
 
             <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-900 text-xs space-y-2">
-              <p className="font-bold text-sm">Are you sure you want to delete '{deleteConfirmMed.name}'?</p>
+              <p className="font-bold text-sm">Are you sure you want to delete &apos;{deleteConfirmMed.name}&apos;?</p>
               <p className="text-rose-700">
                 This will permanently remove this medicine and all its active stock batches ({deleteConfirmMed.batchCount || 0} batches, {deleteConfirmMed.totalStock || 0} total units) from your database.
               </p>
@@ -868,9 +1027,9 @@ export default function InventoryPage() {
             </div>
 
             <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-900 text-xs space-y-2">
-              <p className="font-bold text-sm">Delete Batch '{deleteConfirmBatch.batchNumber}'?</p>
+              <p className="font-bold text-sm">Delete Batch &apos;{deleteConfirmBatch.batchNumber}&apos;?</p>
               <p className="text-rose-700">
-                This will delete Batch '{deleteConfirmBatch.batchNumber}' ({deleteConfirmBatch.quantity} units) for {deleteConfirmBatch.medicineName} from your database.
+                This will delete Batch &apos;{deleteConfirmBatch.batchNumber}&apos; ({deleteConfirmBatch.quantity} units) for {deleteConfirmBatch.medicineName} from your database.
               </p>
             </div>
 

@@ -4,7 +4,7 @@ import { db, client } from "@/lib/db";
 import { initDatabase } from "@/lib/db/init";
 import { medicines, batches, auditLogs, sales, patients, users } from "@/lib/db/schema";
 import { eq, and, asc, gt, sql } from "drizzle-orm";
-import { sendLowStockAlertEmail } from "@/lib/emailService";
+import { sendLowStockAlertEmail, recordStockRecovery } from "@/lib/emailService";
 
 export async function POST(req: Request) {
   const session = await getAuthSession();
@@ -318,16 +318,39 @@ export async function POST(req: Request) {
       .reduce((sum, b) => sum + b.quantity, 0);
 
     let lowStockAlertTriggered = false;
+
     if (remainingStock <= med.reorderThreshold) {
       lowStockAlertTriggered = true;
-      // Trigger background email alert dispatch
-      sendLowStockAlertEmail({
+
+      // Build a brief batch summary for the email body
+      const batchSummary = deductions
+        .map((d) => `Batch ${d.batchNumber} (exp. ${d.expiryDate}): ${d.newBatchQuantity} units remaining`)
+        .join("; ");
+
+      // Await the email so Vercel does not kill the function before Brevo responds
+      await sendLowStockAlertEmail({
         shopId,
         medicineName: med.name,
         currentStock: remainingStock,
         reorderThreshold: med.reorderThreshold,
         manufacturer: med.manufacturer,
-      }).catch((err) => console.error("Async low stock email error:", err));
+        batchInfo: batchSummary || undefined,
+      });
+    } else {
+      // Stock is above threshold — insert a RECOVERY marker so the next
+      // drop below threshold triggers a fresh alert (not a suppressed duplicate).
+      const settings = await import("@/lib/emailService").then((m) =>
+        m.getShopAlertSettings(shopId)
+      );
+      if (settings.alertEmail) {
+        await recordStockRecovery({
+          shopId,
+          medicineName: med.name,
+          currentStock: remainingStock,
+          reorderThreshold: med.reorderThreshold,
+          recipientEmail: settings.alertEmail,
+        });
+      }
     }
 
     // 9. Return comprehensive deduction & financial receipt
