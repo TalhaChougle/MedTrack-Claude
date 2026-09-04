@@ -162,9 +162,9 @@ export async function getShopAlertSettings(shopId: number): Promise<AlertSetting
 async function hasPendingLowStockAlert(
   shopId: number,
   medicineName: string,
+  currentRecipient: string,
 ): Promise<boolean> {
   try {
-    // Find the latest email log for this medicine from this shop
     const logs = await db
       .select()
       .from(emailLogs)
@@ -177,23 +177,28 @@ async function hasPendingLowStockAlert(
       .orderBy(desc(emailLogs.timestamp))
       .limit(50);
 
-    // Walk the most-recent entries for this specific medicine
     for (const log of logs) {
       if (!log.subject.includes(medicineName)) continue;
 
       if (log.status === "SENT") {
-        // A previous alert was accepted by Brevo and stock has not recovered —
-        // suppress the duplicate.
+        // If the previous alert was sent to a DIFFERENT address than the one
+        // currently configured, treat it as no pending alert — the recipient
+        // has changed and deserves a fresh notification.
+        if (log.recipientEmail && log.recipientEmail !== currentRecipient) {
+          console.log(
+            `[DUPLICATE CHECK] Previous SENT log for "${medicineName}" was to ` +
+            `"${log.recipientEmail}" but current recipient is "${currentRecipient}" — ` +
+            `allowing fresh alert.`
+          );
+          return false;
+        }
         return true;
       }
 
       if (log.status === "RECOVERY") {
-        // Stock recovered after a SENT alert — allow a fresh alert.
         return false;
       }
 
-      // FAILED entries do not block re-sending (the previous attempt did not
-      // actually deliver, so we should try again).
       if (log.status === "FAILED") {
         return false;
       }
@@ -279,8 +284,9 @@ export async function sendLowStockAlertEmail(params: {
 
     console.log(`[LOW STOCK] Will attempt to send alert to "${settings.alertEmail}"`);
 
-    // Duplicate-alert prevention
-    const alreadyAlerted = await hasPendingLowStockAlert(shopId, medicineName);
+    // Duplicate-alert prevention (passes current recipient so a changed address
+    // always allows a fresh notification)
+    const alreadyAlerted = await hasPendingLowStockAlert(shopId, medicineName, settings.alertEmail);
     if (alreadyAlerted) {
       console.log(
         `[EMAIL ALERT SKIPPED] Duplicate suppressed for ${medicineName} — stock still below threshold and a SENT alert already exists.`

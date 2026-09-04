@@ -66,6 +66,9 @@ export async function POST(req: Request) {
       .from(alertSettings)
       .where(eq(alertSettings.shopId, shopId));
 
+    const previousEmail = existing.length > 0 ? (existing[0].alertEmail || "") : "";
+    const emailChanged = cleanedEmail !== previousEmail;
+
     if (existing.length > 0) {
       await db
         .update(alertSettings)
@@ -84,11 +87,59 @@ export async function POST(req: Request) {
       });
     }
 
+    // If the recipient email changed, insert a RECOVERY marker for every
+    // medicine that has a pending SENT log.  This means the duplicate-
+    // suppression logic will immediately allow fresh alerts to the new address
+    // without requiring a manual "Reset Alert State".
+    if (emailChanged && cleanedEmail) {
+      try {
+        // Find all distinct medicine names that have an outstanding SENT log
+        const sentLogs = await db
+          .select()
+          .from(emailLogs)
+          .where(eq(emailLogs.shopId, shopId));
+
+        const pendingMedicines = new Set<string>();
+        for (const log of sentLogs) {
+          if (log.alertType === "LOW_STOCK" && log.status === "SENT") {
+            // Extract medicine name from subject, e.g. "⚠️ LOW STOCK ALERT: Paracetamol"
+            const match = log.subject.match(/ALERT:\s*(.+)$/);
+            if (match) pendingMedicines.add(match[1].trim());
+          }
+        }
+
+        // Insert a RECOVERY marker for each, so the next low-stock event
+        // fires to the new recipient.
+        for (const medicineName of pendingMedicines) {
+          await db.insert(emailLogs).values({
+            shopId,
+            recipientEmail: cleanedEmail,
+            subject: `✅ RECIPIENT CHANGED — reset for ${medicineName}`,
+            alertType: "LOW_STOCK",
+            content: `Recipient changed from "${previousEmail}" to "${cleanedEmail}".`,
+            status: "RECOVERY",
+            timestamp: new Date().toISOString(),
+          });
+        }
+
+        if (pendingMedicines.size > 0) {
+          console.log(
+            `[ALERT SETTINGS] Recipient changed "${previousEmail}" → "${cleanedEmail}". ` +
+            `Inserted RECOVERY markers for: ${[...pendingMedicines].join(", ")}`
+          );
+        }
+      } catch (recoveryErr) {
+        // Non-fatal — log and continue
+        console.warn("[ALERT SETTINGS] Failed to insert recovery markers:", recoveryErr);
+      }
+    }
+
     console.log(
       `[ALERT SETTINGS SAVED] shopId=${shopId} ` +
       `recipient="${cleanedEmail}" ` +
       `lowStock=${Boolean(enableLowStockEmails)} ` +
-      `incomingOrder=${Boolean(enableIncomingOrderEmails)}`
+      `incomingOrder=${Boolean(enableIncomingOrderEmails)}` +
+      (emailChanged ? ` (changed from "${previousEmail}")` : "")
     );
 
     return NextResponse.json({
