@@ -9,22 +9,17 @@ import {
   Boxes,
   QrCode,
   AlertTriangle,
-  Trash2,
-  Search,
-  FileSpreadsheet,
+  RefreshCw,
   CheckCircle2,
   Sparkles,
-  HelpCircle,
   Clock,
   ShieldCheck,
-  Smartphone,
   ArrowRight,
   Layers,
   Info,
   PlusCircle,
-  DollarSign,
-  Tag,
-  Calendar,
+  Users,
+  Mail,
 } from "lucide-react";
 
 interface InstructionManualModalProps {
@@ -39,7 +34,6 @@ export default function InstructionManualModal({
   initialTab = "dashboard",
 }: InstructionManualModalProps) {
   const [activeTab, setActiveTab] = useState(initialTab);
-  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     setActiveTab(initialTab);
@@ -47,14 +41,12 @@ export default function InstructionManualModal({
 
   useEffect(() => {
     if (isOpen) {
-      const origOverflow = document.body.style.overflow;
-      const origTouch = document.body.style.touchAction;
       document.body.style.overflow = "hidden";
       document.body.style.touchAction = "none";
       document.documentElement.style.overflow = "hidden";
       return () => {
-        document.body.style.overflow = origOverflow;
-        document.body.style.touchAction = origTouch;
+        document.body.style.overflow = "";
+        document.body.style.touchAction = "";
         document.documentElement.style.overflow = "";
       };
     }
@@ -63,15 +55,13 @@ export default function InstructionManualModal({
   if (!isOpen) return null;
 
   const tabs = [
-    { id: "dashboard", label: "1. Dashboard & KPIs", icon: LayoutDashboard },
-    { id: "dispense", label: "2. FEFO & Batch Dispense", icon: ShoppingCart },
-    { id: "finance", label: "3. Finance Tracker & Discounts", icon: DollarSign },
-    { id: "inventory", label: "4. Inventory & Batches", icon: Boxes },
-    { id: "barcode", label: "5. Barcode & Remote Scan", icon: QrCode },
-    { id: "alerts", label: "6. Expiry & Restock Alerts", icon: AlertTriangle },
-    { id: "wastage", label: "7. Wastage & Quarantining", icon: Trash2 },
-    { id: "fda", label: "8. openFDA Drug Reference", icon: Search },
-    { id: "audit", label: "9. Audit & Exports", icon: FileSpreadsheet },
+    { id: "dashboard",  label: "1. Dashboard & KPIs",          icon: LayoutDashboard },
+    { id: "dispense",   label: "2. FEFO Dispensing",            icon: ShoppingCart },
+    { id: "inventory",  label: "3. Inventory & Batches",        icon: Boxes },
+    { id: "barcode",    label: "4. Barcode Scanning",           icon: QrCode },
+    { id: "patients",   label: "5. Patient Records",            icon: Users },
+    { id: "alerts",     label: "6. Expiry Alerts & Restock",   icon: AlertTriangle },
+    { id: "email",      label: "7. Email Notifications",        icon: Mail },
   ];
 
   return (
@@ -94,14 +84,13 @@ export default function InstructionManualModal({
                 <span className="px-1.5 sm:px-2 py-0.5 rounded-full text-[8px] sm:text-[10px] font-extrabold uppercase bg-teal-400/20 text-teal-300 border border-teal-400/30 whitespace-nowrap">
                   User Instruction Manual
                 </span>
-                <span className="text-[8px] sm:text-[10px] text-slate-300 font-medium whitespace-nowrap">MedTrack v2.0</span>
+                <span className="text-[8px] sm:text-[10px] text-slate-300 font-medium whitespace-nowrap">MedTrack</span>
               </div>
               <h2 className="text-xs sm:text-xl font-black text-white tracking-tight truncate mt-0.5">
-                Pharmacy Dashboard & FEFO System Guide
+                Pharmacy Inventory &amp; Patient Management System
               </h2>
             </div>
           </div>
-
           <button
             onClick={onClose}
             className="p-1.5 sm:p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer shrink-0 ml-1"
@@ -111,9 +100,9 @@ export default function InstructionManualModal({
           </button>
         </div>
 
-        {/* Content Body Layout */}
+        {/* Content Body */}
         <div className="flex flex-col md:flex-row flex-1 min-h-0 overflow-hidden">
-          {/* Left Navigation Sidebar / Top Pill Bar on Mobile */}
+          {/* Sidebar / Top Pill Bar on Mobile */}
           <div className="w-full md:w-64 bg-slate-50 border-b md:border-b-0 md:border-r border-slate-200 p-1.5 sm:p-3 overflow-x-auto md:overflow-y-auto flex md:flex-col shrink-0 scrollbar-none gap-1 touch-pan-x min-w-0">
             <p className="hidden md:block px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
               Documentation Topics
@@ -138,18 +127,17 @@ export default function InstructionManualModal({
             })}
           </div>
 
-          {/* Right Main Detail Content Panel */}
+          {/* Main Content Panel */}
           <div className="flex-1 p-3.5 sm:p-6 overflow-y-auto space-y-4 sm:space-y-6 bg-white text-slate-800 text-xs sm:text-sm leading-relaxed overscroll-contain min-h-0">
-            {/* TAB 1: DASHBOARD */}
+
+            {/* ── TAB 1: DASHBOARD ── */}
             {activeTab === "dashboard" && (
               <div className="space-y-5 animate-in fade-in duration-150">
                 <div className="border-b border-slate-200 pb-3">
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-teal-50 text-teal-800 border border-teal-200 uppercase">
-                    Section 1
-                  </span>
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-teal-50 text-teal-800 border border-teal-200 uppercase">Section 1</span>
                   <h3 className="text-xl font-extrabold text-[#1E3A5F] mt-1 flex items-center gap-2">
                     <LayoutDashboard className="w-6 h-6 text-teal-600" />
-                    <span>Dashboard & System Overview</span>
+                    Dashboard &amp; System Overview
                   </h3>
                   <p className="text-slate-500 text-xs font-medium">
                     Central command center monitoring real-time stock levels, batch expiries, and reorder triggers.
@@ -159,69 +147,48 @@ export default function InstructionManualModal({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
                     <h4 className="font-extrabold text-[#1E3A5F] flex items-center gap-1.5 text-xs">
-                      <Boxes className="w-4 h-4 text-teal-600" />
-                      <span>Total Stock KPI</span>
+                      <Boxes className="w-4 h-4 text-teal-600" />Total Stock KPI
                     </h4>
-                    <p className="text-xs text-slate-600">
-                      Shows total unique medicine count and overall physical units tracked in active inventory.
-                    </p>
+                    <p className="text-xs text-slate-600">Shows total unique medicine count and overall physical units across all active batches.</p>
                   </div>
-
                   <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 space-y-1">
                     <h4 className="font-extrabold text-rose-900 flex items-center gap-1.5 text-xs">
-                      <AlertTriangle className="w-4 h-4 text-rose-600" />
-                      <span>Expired Batches Count</span>
+                      <AlertTriangle className="w-4 h-4 text-rose-600" />Expired Batches
                     </h4>
-                    <p className="text-xs text-rose-800">
-                      Instantly alerts you of stock that has surpassed its expiry date and must be moved to Wastage.
-                    </p>
+                    <p className="text-xs text-rose-800">Instantly alerts you to stock past its expiry date. Click to view on the Alerts page.</p>
                   </div>
-
                   <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 space-y-1">
                     <h4 className="font-extrabold text-amber-900 flex items-center gap-1.5 text-xs">
-                      <Clock className="w-4 h-4 text-amber-700" />
-                      <span>Expiring ≤ 30 Days</span>
+                      <Clock className="w-4 h-4 text-amber-700" />Expiring ≤ 30 Days
                     </h4>
-                    <p className="text-xs text-amber-800">
-                      Counts batches expiring within 1-7 days (Urgent) and 8-30 days (Warning) so you can prioritize sales or returns.
-                    </p>
+                    <p className="text-xs text-amber-800">Counts batches expiring within 7 days (Urgent) and 8–30 days (Warning) so you can prioritize sales.</p>
                   </div>
-
                   <div className="p-4 rounded-2xl bg-teal-50 border border-teal-200 space-y-1">
                     <h4 className="font-extrabold text-teal-900 flex items-center gap-1.5 text-xs">
-                      <ShieldCheck className="w-4 h-4 text-teal-700" />
-                      <span>Low Stock Reorders</span>
+                      <ShieldCheck className="w-4 h-4 text-teal-700" />Low Stock Alerts
                     </h4>
-                    <p className="text-xs text-teal-800">
-                      Automatically detects medicines whose total stock is below the minimum safety threshold.
-                    </p>
+                    <p className="text-xs text-teal-800">Detects medicines whose total stock is below the configured reorder threshold. Links to Restock page.</p>
                   </div>
                 </div>
 
                 <div className="p-4 rounded-2xl bg-cyan-50 border border-cyan-200 text-cyan-900 space-y-2">
                   <h4 className="font-extrabold flex items-center gap-2 text-sm text-[#1E3A5F]">
-                    <Sparkles className="w-4 h-4 text-[#1BA6C4]" />
-                    <span>How Multi-Shop Isolation & Roles Work</span>
+                    <Sparkles className="w-4 h-4 text-[#1BA6C4]" />Quick Navigation shortcuts
                   </h4>
-                  <ul className="list-disc pl-5 space-y-1 text-xs text-slate-700 font-medium">
-                    <li>Each logged-in account operates under a specific <strong>Shop ID</strong>. Stock, sales, and audit logs are fully isolated.</li>
-                    <li><strong>Owner Accounts</strong> can access audit logs, financial reports, and export stock CSVs.</li>
-                    <li><strong>Staff Accounts</strong> have full access to POS dispensing, barcode scanning, stock-in, and wastage logging.</li>
-                  </ul>
+                  <p className="text-xs text-slate-700 font-medium">
+                    The dashboard&apos;s Quick Navigation panel links directly to FEFO Point of Sale, Inventory, Patient Records, and Restock for one-click access to the most-used workflows.
+                  </p>
                 </div>
               </div>
             )}
 
-            {/* TAB 2: DISPENSE & BATCH POPUP */}
+            {/* ── TAB 2: FEFO DISPENSING ── */}
             {activeTab === "dispense" && (
               <div className="space-y-5 animate-in fade-in duration-150">
                 <div className="border-b border-slate-200 pb-3">
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-teal-50 text-teal-800 border border-teal-200 uppercase">
-                    Section 2
-                  </span>
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-teal-50 text-teal-800 border border-teal-200 uppercase">Section 2</span>
                   <h3 className="text-xl font-extrabold text-[#1E3A5F] mt-1 flex items-center gap-2">
-                    <ShoppingCart className="w-6 h-6 text-teal-600" />
-                    <span>FEFO Dispensing & Batch Selection Flow</span>
+                    <ShoppingCart className="w-6 h-6 text-teal-600" />FEFO Dispensing &amp; Batch Selection
                   </h3>
                   <p className="text-slate-500 text-xs font-medium">
                     MedTrack enforces First-Expiry, First-Out (FEFO) dispensing to eliminate financial loss and ensure patient safety.
@@ -230,382 +197,276 @@ export default function InstructionManualModal({
 
                 <div className="p-4 rounded-2xl bg-teal-50 border border-teal-200 text-teal-900 space-y-2">
                   <h4 className="font-extrabold text-sm flex items-center gap-2 text-[#1E3A5F]">
-                    <Sparkles className="w-4 h-4 text-teal-600" />
-                    <span>Step-by-Step Dispensing Workflow</span>
+                    <Sparkles className="w-4 h-4 text-teal-600" />Step-by-Step Dispensing Workflow
                   </h4>
                   <ol className="list-decimal pl-5 space-y-2 text-xs text-slate-700 font-medium">
-                    <li>
-                      <strong>Search or Scan Medicine:</strong> Search by medicine name, generic name, or scan barcode at POS (<code>/sell</code>).
-                    </li>
-                    <li>
-                      <strong>Select Medicine (Opens Batch Selection Pop-up):</strong> Clicking a medicine opens the <strong>Batch Selection Pop-up Modal</strong> showing all available batches with batch numbers, expiry dates, unexpired (🟢) vs expired (🔴) badges, supplier, and current stock.
-                    </li>
-                    <li>
-                      <strong>Pick Batch or Auto FEFO:</strong> Choose a specific batch card, or click <em>"⚡ Auto FEFO (Nearest Expiry)"</em>.
-                    </li>
-                    <li>
-                      <strong>Enter Quantity & Price (Opens Normal Dispense Modal):</strong> The <strong>Normal Dispense Pop-up</strong> opens pre-focused on the selected batch. Enter quantity and selling price per unit. Total bill amount is calculated live.
-                    </li>
-                    <li>
-                      <strong>Confirm Dispense & View Receipt:</strong> Click <em>"Confirm Dispense & Log Sale"</em>. Stock is deducted, FEFO order is logged, and a clean digital sale receipt is displayed.
-                    </li>
+                    <li><strong>Search or Scan Medicine:</strong> Search by name, or scan a barcode using the scanner buttons in the top nav.</li>
+                    <li><strong>Select Medicine:</strong> Clicking a medicine opens the <strong>Batch Selection popup</strong> showing all batches with expiry dates and stock levels.</li>
+                    <li><strong>Pick a Batch or Auto-FEFO:</strong> Choose a specific batch, or click <em>&ldquo;⚡ Auto FEFO (Nearest Expiry)&rdquo;</em>.</li>
+                    <li><strong>Enter Quantity, Price &amp; Patient:</strong> Fill in quantity, unit price, optional discount, patient name, and doctor name.</li>
+                    <li><strong>Confirm Dispense:</strong> Click <em>&ldquo;Confirm Dispense &amp; Log Sale&rdquo;</em>. Stock is deducted and a receipt is shown.</li>
                   </ol>
                 </div>
 
                 <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-900 space-y-2">
                   <div className="flex items-center gap-2 font-extrabold text-xs text-rose-800 uppercase tracking-wider">
-                    <AlertTriangle className="w-4 h-4 text-rose-600" />
-                    <span>Strict Patient Safety Rules</span>
+                    <AlertTriangle className="w-4 h-4 text-rose-600" />Strict Patient Safety Rule
                   </div>
                   <p className="text-xs text-rose-800 font-medium">
-                    The FEFO algorithm automatically <strong>blocks expired batches from sales</strong>. If a medicine only has expired stock remaining, the system will prevent sales and guide staff to write it off in the Wastage module.
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {/* TAB 3: FINANCE TRACKER & DISCOUNTS */}
-            {activeTab === "finance" && (
-              <div className="space-y-5 animate-in fade-in duration-150">
-                <div className="border-b border-slate-200 pb-3">
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-teal-50 text-teal-800 border border-teal-200 uppercase">
-                    Section 3
-                  </span>
-                  <h3 className="text-xl font-extrabold text-[#1E3A5F] mt-1 flex items-center gap-2">
-                    <DollarSign className="w-6 h-6 text-teal-600" />
-                    <span>Finance Tracker & Discounts</span>
-                  </h3>
-                  <p className="text-slate-500 text-xs font-medium">
-                    Comprehensive financial dashboard tracking revenue metrics, discount write-offs, and transaction analytics.
+                    The FEFO engine automatically <strong>blocks expired batches</strong> from sale. If only expired stock remains, the system prevents the transaction and prompts you to log wastage from the Alerts page.
                   </p>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div className="p-4 rounded-2xl bg-teal-50 border border-teal-200 space-y-1">
-                    <h4 className="font-extrabold text-teal-900 flex items-center gap-1.5 text-xs">
-                      <DollarSign className="w-4 h-4 text-teal-700" />
-                      <span>Revenue Analytics</span>
-                    </h4>
-                    <p className="text-xs text-teal-800">
-                      Monitor Today's, Weekly, Monthly, and Total Revenue generated from FEFO pharmacy sales.
-                    </p>
-                  </div>
-
-                  <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 space-y-1">
-                    <h4 className="font-extrabold text-emerald-900 flex items-center gap-1.5 text-xs">
-                      <Tag className="w-4 h-4 text-emerald-700" />
-                      <span>Discounts & Pricing Write-offs</span>
-                    </h4>
-                    <p className="text-xs text-emerald-800">
-                      Track total customer discounts granted during dispensing to evaluate profit margins and promotion costs.
-                    </p>
-                  </div>
-
-                  <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
-                    <h4 className="font-extrabold text-[#1E3A5F] flex items-center gap-1.5 text-xs">
-                      <Calendar className="w-4 h-4 text-teal-600" />
-                      <span>Time Period Filters</span>
-                    </h4>
-                    <p className="text-xs text-slate-600">
-                      Filter transaction tables seamlessly between All Time, Today, This Week, and This Month views.
-                    </p>
-                  </div>
-
-                  <div className="p-4 rounded-2xl bg-cyan-50 border border-cyan-200 space-y-1">
-                    <h4 className="font-extrabold text-cyan-900 flex items-center gap-1.5 text-xs">
-                      <FileSpreadsheet className="w-4 h-4 text-[#1BA6C4]" />
-                      <span>Transaction Ledger & Exports</span>
-                    </h4>
-                    <p className="text-xs text-cyan-800">
-                      View itemized sales breakdown with batch numbers, quantities, unit prices, and export financial data to CSV.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="p-4 rounded-2xl bg-indigo-50 border border-indigo-200 text-indigo-900 space-y-2">
-                  <h4 className="font-extrabold text-sm flex items-center gap-2 text-[#1E3A5F]">
-                    <Sparkles className="w-4 h-4 text-indigo-600" />
-                    <span>How to Access Finance Reports</span>
+                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1.5">
+                  <h4 className="font-extrabold text-[#1E3A5F] text-xs flex items-center gap-2">
+                    <Info className="w-4 h-4 text-teal-600" />Discount Support
                   </h4>
-                  <p className="text-xs text-slate-700 font-medium">
-                    Navigate to <strong>Finance (<code>/finance</code>)</strong> in the top navigation bar. Financial metrics auto-update in real time whenever a sale is completed at POS.
+                  <p className="text-xs text-slate-600">
+                    Apply a percentage discount during dispensing. The system calculates the discount amount and final net bill live before you confirm.
                   </p>
                 </div>
               </div>
             )}
 
-            {/* TAB 4: INVENTORY */}
+            {/* ── TAB 3: INVENTORY ── */}
             {activeTab === "inventory" && (
               <div className="space-y-5 animate-in fade-in duration-150">
                 <div className="border-b border-slate-200 pb-3">
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-teal-50 text-teal-800 border border-teal-200 uppercase">
-                    Section 4
-                  </span>
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-teal-50 text-teal-800 border border-teal-200 uppercase">Section 3</span>
                   <h3 className="text-xl font-extrabold text-[#1E3A5F] mt-1 flex items-center gap-2">
-                    <Boxes className="w-6 h-6 text-teal-600" />
-                    <span>Inventory Catalog & Batch Management</span>
+                    <Boxes className="w-6 h-6 text-teal-600" />Inventory Catalog &amp; Batch Management
                   </h3>
                   <p className="text-slate-500 text-xs font-medium">
-                    Manage master medicine catalog, auto-classify drug schedules, and stock-in new delivery batches.
+                    Manage the master medicine catalog and track all stock batches with expiry dates.
                   </p>
                 </div>
 
                 <div className="space-y-3">
                   <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1.5">
                     <h4 className="font-extrabold text-[#1E3A5F] text-xs flex items-center gap-2">
-                      <PlusCircle className="w-4 h-4 text-teal-600" />
-                      <span>Adding a New Medicine</span>
+                      <PlusCircle className="w-4 h-4 text-teal-600" />Adding a New Medicine
                     </h4>
                     <p className="text-xs text-slate-600">
-                      Navigate to <strong>Inventory (<code>/inventory</code>)</strong> and click <em>"+ Add New Medicine"</em>. Fill in name, manufacturer, barcode, unit selling price, and safety reorder threshold.
+                      Go to <strong>Inventory</strong> and click <em>&ldquo;+ Register New Medicine&rdquo;</em>. Fill in name, manufacturer, optional barcode, drug schedule, unit selling price, and the low-stock alert threshold.
                     </p>
                   </div>
-
                   <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1.5">
                     <h4 className="font-extrabold text-[#1E3A5F] text-xs flex items-center gap-2">
-                      <Layers className="w-4 h-4 text-teal-600" />
-                      <span>Automatic Drug Schedule Classification</span>
+                      <Layers className="w-4 h-4 text-teal-600" />Automatic Drug Schedule Classification
                     </h4>
                     <p className="text-xs text-slate-600">
-                      MedTrack includes an intelligent drug classifier algorithm. When you type medicine names containing controlled substances (e.g. Alprazolam, Tramadol, Morphine), the system auto-selects <strong>Schedule H, H1, or X</strong> according to Indian Drugs & Cosmetics regulations. OTC products are set to <strong>OTC</strong>.
+                      When you type a medicine name the system auto-classifies it as <strong>OTC, Schedule H, H1, or X</strong> based on Indian Drugs &amp; Cosmetics regulations. You can override the suggestion.
                     </p>
                   </div>
-
                   <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1.5">
                     <h4 className="font-extrabold text-[#1E3A5F] text-xs flex items-center gap-2">
-                      <Boxes className="w-4 h-4 text-teal-600" />
-                      <span>Stocking In New Batches</span>
+                      <Boxes className="w-4 h-4 text-teal-600" />Adding a New Batch
                     </h4>
                     <p className="text-xs text-slate-600">
-                      Expand any medicine row on the Inventory page and click <em>"+ Stock In Batch"</em> (or use <strong>Stock In Scanner</strong>). Enter batch number, expiry date, quantity received, supplier, and unit cost price.
+                      Expand any medicine row and click <em>&ldquo;+ Add Batch&rdquo;</em> (or use the <strong>Stock In</strong> scanner button in the nav). Enter the batch number, expiry date, quantity, supplier, and cost price.
+                    </p>
+                  </div>
+                  <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 space-y-1.5">
+                    <h4 className="font-extrabold text-amber-900 text-xs flex items-center gap-2">
+                      <AlertTriangle className="w-4 h-4 text-amber-600" />Low-Stock Alert Threshold
+                    </h4>
+                    <p className="text-xs text-amber-800">
+                      Expand a medicine row and use the <strong>Low Stock Alert Threshold</strong> panel to set how many units trigger an alert. Each medicine has its own configurable threshold.
                     </p>
                   </div>
                 </div>
               </div>
             )}
 
-            {/* TAB 5: BARCODE & REMOTE SCAN */}
+            {/* ── TAB 4: BARCODE SCANNING ── */}
             {activeTab === "barcode" && (
               <div className="space-y-5 animate-in fade-in duration-150">
                 <div className="border-b border-slate-200 pb-3">
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-teal-50 text-teal-800 border border-teal-200 uppercase">
-                    Section 5
-                  </span>
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-teal-50 text-teal-800 border border-teal-200 uppercase">Section 4</span>
                   <h3 className="text-xl font-extrabold text-[#1E3A5F] mt-1 flex items-center gap-2">
-                    <QrCode className="w-6 h-6 text-teal-600" />
-                    <span>Barcode & Remote Phone Scanning</span>
+                    <QrCode className="w-6 h-6 text-teal-600" />Barcode Scanning
                   </h3>
                   <p className="text-slate-500 text-xs font-medium">
-                    Supports desktop webcam scanning, physical USB barcode scanners, and wireless mobile phone barcode transmission.
+                    Use your webcam or a physical USB barcode scanner to quickly identify medicines and process deliveries.
                   </p>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="p-4 rounded-2xl bg-teal-50 border border-teal-200 space-y-2">
                     <h4 className="font-extrabold text-[#1E3A5F] text-xs flex items-center gap-2">
-                      <QrCode className="w-4 h-4 text-teal-600" />
-                      <span>Check Stock Mode</span>
+                      <QrCode className="w-4 h-4 text-teal-600" />Check Stock Mode
                     </h4>
                     <p className="text-xs text-slate-700">
-                      Scans barcodes on packaging to immediately lookup medicine total stock, batch breakdown, and expiry dates without manual typing.
+                      Scans a barcode to instantly look up that medicine&apos;s stock, batch breakdown, and expiry dates — no typing needed.
                     </p>
                   </div>
-
                   <div className="p-4 rounded-2xl bg-cyan-50 border border-cyan-200 space-y-2">
                     <h4 className="font-extrabold text-[#1E3A5F] text-xs flex items-center gap-2">
-                      <Boxes className="w-4 h-4 text-[#1BA6C4]" />
-                      <span>Stock In Mode</span>
+                      <Boxes className="w-4 h-4 text-[#1BA6C4]" />Stock In Mode
                     </h4>
                     <p className="text-xs text-slate-700">
-                      Scans delivery barcodes to automatically open the Stock In form pre-filled with medicine barcode details for rapid inventory receiving.
+                      Scans a delivery barcode to open the Add Batch form pre-filled with medicine details for faster inventory receiving.
                     </p>
                   </div>
                 </div>
 
-                <div className="p-4 rounded-2xl bg-indigo-50 border border-indigo-200 text-indigo-900 space-y-2">
-                  <h4 className="font-extrabold text-sm flex items-center gap-2 text-[#1E3A5F]">
-                    <Smartphone className="w-4 h-4 text-indigo-600" />
-                    <span>Remote Mobile Phone Scan Feature</span>
+                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+                  <h4 className="font-extrabold text-[#1E3A5F] text-xs flex items-center gap-2">
+                    <Info className="w-4 h-4 text-teal-600" />Manual Search Fallback
                   </h4>
-                  <p className="text-xs text-slate-700 font-medium">
-                    Don’t have a desktop webcam or handheld scanner? Open the Barcode Scanner modal and click <em>"Use Phone Camera"</em>. Scan the QR code with your mobile phone camera to open <code>/remote-scan</code>. Any barcode scanned on your phone will automatically transmit wirelessly in real time to your desktop session!
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {/* TAB 6: ALERTS & RESTOCK */}
-            {activeTab === "alerts" && (
-              <div className="space-y-5 animate-in fade-in duration-150">
-                <div className="border-b border-slate-200 pb-3">
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-teal-50 text-teal-800 border border-teal-200 uppercase">
-                    Section 6
-                  </span>
-                  <h3 className="text-xl font-extrabold text-[#1E3A5F] mt-1 flex items-center gap-2">
-                    <AlertTriangle className="w-6 h-6 text-amber-600" />
-                    <span>Expiry Alerts & Supplier Restocking</span>
-                  </h3>
-                  <p className="text-slate-500 text-xs font-medium">
-                    Color-coded timeline alerts for batch expiries and supplier reorder management.
-                  </p>
-                </div>
-
-                <div className="space-y-2">
-                  <h4 className="font-extrabold text-xs text-[#1E3A5F] uppercase tracking-wider">
-                    Expiry Risk Level Indicators:
-                  </h4>
-                  <div className="space-y-2">
-                    <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 flex items-center justify-between text-xs">
-                      <span className="font-extrabold text-rose-900">🔴 EXPIRED (0 Days Left)</span>
-                      <span className="text-rose-700 text-[11px] font-medium">Must quarantine & log wastage immediately.</span>
-                    </div>
-                    <div className="p-3 rounded-xl bg-rose-50/70 border border-rose-200 flex items-center justify-between text-xs">
-                      <span className="font-extrabold text-rose-800">🔴 URGENT (1 - 7 Days Left)</span>
-                      <span className="text-rose-700 text-[11px] font-medium">High risk of expiring soon. Prioritize selling.</span>
-                    </div>
-                    <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-between text-xs">
-                      <span className="font-extrabold text-amber-900">🟠 WARNING (8 - 30 Days Left)</span>
-                      <span className="text-amber-800 text-[11px] font-medium">Prepare return to supplier or clearance.</span>
-                    </div>
-                    <div className="p-3 rounded-xl bg-cyan-50 border border-cyan-200 flex items-center justify-between text-xs">
-                      <span className="font-extrabold text-[#1E3A5F]">🔵 NOTICE (31 - 90 Days Left)</span>
-                      <span className="text-slate-600 text-[11px] font-medium">Under active observation.</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="p-4 rounded-2xl bg-teal-50 border border-teal-200 space-y-1.5">
-                  <h4 className="font-extrabold text-[#1E3A5F] text-xs">Supplier Restock Module (<code>/restock</code>)</h4>
-                  <p className="text-xs text-slate-700">
-                    Medicines whose total stock falls below their configured reorder threshold appear on the Restock page. View suggested reorder quantities, supplier contacts, and batch receiving history.
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {/* TAB 7: WASTAGE */}
-            {activeTab === "wastage" && (
-              <div className="space-y-5 animate-in fade-in duration-150">
-                <div className="border-b border-slate-200 pb-3">
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-teal-50 text-teal-800 border border-teal-200 uppercase">
-                    Section 7
-                  </span>
-                  <h3 className="text-xl font-extrabold text-[#1E3A5F] mt-1 flex items-center gap-2">
-                    <Trash2 className="w-6 h-6 text-rose-600" />
-                    <span>Wastage Logging & Quarantining</span>
-                  </h3>
-                  <p className="text-slate-500 text-xs font-medium">
-                    Write off expired, damaged, or recalled batch stock for audit compliance and financial records.
-                  </p>
-                </div>
-
-                <div className="space-y-3">
-                  <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 space-y-1.5">
-                    <h4 className="font-extrabold text-rose-900 text-xs flex items-center gap-2">
-                      <Trash2 className="w-4 h-4 text-rose-600" />
-                      <span>Logging Wastage Step-by-Step</span>
-                    </h4>
-                    <ol className="list-decimal pl-5 space-y-1 text-xs text-rose-800 font-medium">
-                      <li>Go to <strong>Wastage (<code>/wastage</code>)</strong>.</li>
-                      <li>Select the medicine and specific batch number containing unusable units.</li>
-                      <li>Enter quantity to write off and select reason (<em>EXPIRED</em>, <em>DAMAGED</em>, <em>RECALLED</em>, <em>OTHER</em>).</li>
-                      <li>Click <em>"Confirm Wastage Write-Off"</em>.</li>
-                    </ol>
-                  </div>
-
-                  <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
-                    <h4 className="font-extrabold text-[#1E3A5F] text-xs">Stock Deduction & Audit Trail</h4>
-                    <p className="text-xs text-slate-600">
-                      Wastage transactions permanently deduct units from the target batch, write a record to the system audit trail, and calculate total financial write-off loss for accounting.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* TAB 8: OPENFDA REFERENCE */}
-            {activeTab === "fda" && (
-              <div className="space-y-5 animate-in fade-in duration-150">
-                <div className="border-b border-slate-200 pb-3">
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-teal-50 text-teal-800 border border-teal-200 uppercase">
-                    Section 8
-                  </span>
-                  <h3 className="text-xl font-extrabold text-[#1E3A5F] mt-1 flex items-center gap-2">
-                    <Search className="w-6 h-6 text-teal-600" />
-                    <span>openFDA Drug Reference Search</span>
-                  </h3>
-                  <p className="text-slate-500 text-xs font-medium">
-                    Live lookup for official active ingredients, drug class indications, warnings, and contraindications.
+                  <p className="text-xs text-slate-600">
+                    If a barcode is unavailable or unscannable, use the <strong>search bar on the FEFO POS page</strong> to find a medicine by name or manufacturer. Manual search is always available as a fallback.
                   </p>
                 </div>
 
                 <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
                   <h4 className="font-extrabold text-[#1E3A5F] text-xs flex items-center gap-2">
-                    <Info className="w-4 h-4 text-teal-600" />
-                    <span>How to Use openFDA Search</span>
+                    <ArrowRight className="w-4 h-4 text-teal-600" />Where to Find the Scanner
                   </h4>
-                  <p className="text-xs text-slate-700">
-                    Navigate to <strong>FDA Reference (<code>/reference</code>)</strong>. Type any brand name or generic compound (e.g. <em>Amoxicillin</em>, <em>Metformin</em>, <em>Atorvastatin</em>). The module queries openFDA regulatory databases in real time to display package inserts, active ingredients, boxed warnings, dosage forms, and manufacturer details.
+                  <p className="text-xs text-slate-600">
+                    The scanner buttons (<em>Check</em> and <em>Stock In</em>) appear in the top navigation bar on every page for quick access without leaving your current workflow.
                   </p>
                 </div>
               </div>
             )}
 
-            {/* TAB 9: AUDIT & EXPORTS */}
-            {activeTab === "audit" && (
+            {/* ── TAB 5: PATIENT RECORDS ── */}
+            {activeTab === "patients" && (
               <div className="space-y-5 animate-in fade-in duration-150">
                 <div className="border-b border-slate-200 pb-3">
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-teal-50 text-teal-800 border border-teal-200 uppercase">
-                    Section 9
-                  </span>
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-teal-50 text-teal-800 border border-teal-200 uppercase">Section 5</span>
                   <h3 className="text-xl font-extrabold text-[#1E3A5F] mt-1 flex items-center gap-2">
-                    <FileSpreadsheet className="w-6 h-6 text-teal-600" />
-                    <span>Audit Log Trail & CSV Data Export</span>
+                    <Users className="w-6 h-6 text-teal-600" />Patient Records
                   </h3>
                   <p className="text-slate-500 text-xs font-medium">
-                    Comprehensive compliance log recording stock-in, sales, stock adjustments, and CSV downloads for store owners.
+                    Maintain a simple pharmacy-focused patient record linked to their purchase history.
                   </p>
                 </div>
 
                 <div className="space-y-3">
                   <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1.5">
                     <h4 className="font-extrabold text-[#1E3A5F] text-xs flex items-center gap-2">
-                      <ShieldCheck className="w-4 h-4 text-teal-600" />
-                      <span>Tamper-Evident System Audit Trail</span>
+                      <PlusCircle className="w-4 h-4 text-teal-600" />Registering a Patient Automatically
                     </h4>
                     <p className="text-xs text-slate-600">
-                      Available to Store Owners under <strong>Audit & Exports (<code>/audit</code>)</strong>. Automatically logs all user activities: sales transactions, new medicine creations, batch stock-ins, deletions, and wastage write-offs with exact timestamps and staff credentials.
+                      Patients are registered automatically when you enter a name in the <strong>Patient Name</strong> field during dispensing at the FEFO POS. No separate registration step is needed.
                     </p>
                   </div>
-
-                  <div className="p-4 rounded-2xl bg-teal-50 border border-teal-200 space-y-1.5">
-                    <h4 className="font-extrabold text-teal-900 text-xs flex items-center gap-2">
-                      <FileSpreadsheet className="w-4 h-4 text-teal-700" />
-                      <span>One-Click CSV Data Export</span>
+                  <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1.5">
+                    <h4 className="font-extrabold text-[#1E3A5F] text-xs flex items-center gap-2">
+                      <Users className="w-4 h-4 text-teal-600" />Viewing Patient History
                     </h4>
-                    <p className="text-xs text-teal-800">
-                      Export full active inventory lists, batch expiry schedules, sales reports, and audit logs to standard Excel/CSV spreadsheets anytime for accounting or regulatory inspections.
+                    <p className="text-xs text-slate-600">
+                      Go to <strong>Patient Records</strong> in the navigation. Each patient card shows total purchases and total spent. Click <em>&ldquo;View Past Invoices&rdquo;</em> to see a full printable invoice history.
+                    </p>
+                  </div>
+                  <div className="p-4 rounded-2xl bg-cyan-50 border border-cyan-200 space-y-1.5">
+                    <h4 className="font-extrabold text-[#1E3A5F] text-xs flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-teal-600" />Printing Invoices
+                    </h4>
+                    <p className="text-xs text-slate-600">
+                      Open a patient&apos;s invoice history and click the <strong>Print</strong> button to generate a formatted pharmacy receipt suitable for handing to the patient.
                     </p>
                   </div>
                 </div>
               </div>
             )}
-          </div>
-        </div>
 
-        {/* Footer */}
-        <div className="bg-slate-100 border-t border-slate-200 px-3.5 sm:px-6 py-2 sm:py-3 flex items-center justify-between shrink-0 gap-2">
-          <div className="hidden sm:flex items-center gap-2 text-xs text-slate-500 font-medium">
-            <HelpCircle className="w-4 h-4 text-teal-600 shrink-0" />
-            <span>Need more assistance? Contact store administrator.</span>
-          </div>
+            {/* ── TAB 6: EXPIRY ALERTS & RESTOCK ── */}
+            {activeTab === "alerts" && (
+              <div className="space-y-5 animate-in fade-in duration-150">
+                <div className="border-b border-slate-200 pb-3">
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-teal-50 text-teal-800 border border-teal-200 uppercase">Section 6</span>
+                  <h3 className="text-xl font-extrabold text-[#1E3A5F] mt-1 flex items-center gap-2">
+                    <AlertTriangle className="w-6 h-6 text-amber-600" />Expiry Alerts &amp; Restock
+                  </h3>
+                  <p className="text-slate-500 text-xs font-medium">
+                    Monitor batch shelf life and replenish low-stock medicines before they run out.
+                  </p>
+                </div>
 
-          <button
-            onClick={onClose}
-            className="w-full sm:w-auto px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl sm:rounded-2xl bg-[#1E3A5F] hover:bg-[#152a45] text-white font-extrabold text-xs shadow-md transition-all cursor-pointer text-center"
-          >
-            Got It! Close Manual
-          </button>
+                <div className="space-y-2">
+                  <h4 className="font-extrabold text-xs text-[#1E3A5F] uppercase tracking-wider">Expiry Risk Levels:</h4>
+                  <div className="space-y-2">
+                    {[
+                      { color: "rose", label: "🔴 EXPIRED", desc: "Must be quarantined. Log wastage using the Log Wastage button on the alert card." },
+                      { color: "rose", label: "🔴 URGENT (1–7 Days)", desc: "High risk. Prioritize selling or return to supplier." },
+                      { color: "amber", label: "🟠 WARNING (8–30 Days)", desc: "Last window to return to supplier for credit." },
+                      { color: "teal",  label: "🔵 NOTICE (31–60 Days)", desc: "Under observation. No urgent action needed." },
+                    ].map((item) => (
+                      <div key={item.label} className={`p-3 rounded-xl bg-${item.color}-50 border border-${item.color}-200 flex items-start justify-between text-xs gap-2`}>
+                        <span className={`font-extrabold text-${item.color}-900 shrink-0`}>{item.label}</span>
+                        <span className={`text-${item.color}-800 text-[11px] font-medium text-right`}>{item.desc}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-teal-50 border border-teal-200 space-y-1.5">
+                  <h4 className="font-extrabold text-[#1E3A5F] text-xs flex items-center gap-2">
+                    <RefreshCw className="w-4 h-4 text-teal-600" />Restocking Low-Stock Medicines
+                  </h4>
+                  <p className="text-xs text-slate-700">
+                    Navigate to <strong>Restock</strong>. Each low-stock medicine shows current stock vs threshold. Click <em>&ldquo;Add Stock&rdquo;</em> to enter a new batch (batch number, quantity, expiry date, supplier) and immediately update the inventory.
+                  </p>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 space-y-1.5">
+                  <h4 className="font-extrabold text-rose-900 text-xs">Logging Wastage from Alert Cards</h4>
+                  <p className="text-xs text-rose-800">
+                    On the Alerts page, each expired or near-expired batch card has a <em>&ldquo;Log Wastage&rdquo;</em> button. Enter units to write off and the reason. This deducts the units from inventory and records the write-off.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* ── TAB 7: EMAIL NOTIFICATIONS ── */}
+            {activeTab === "email" && (
+              <div className="space-y-5 animate-in fade-in duration-150">
+                <div className="border-b border-slate-200 pb-3">
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-teal-50 text-teal-800 border border-teal-200 uppercase">Section 7</span>
+                  <h3 className="text-xl font-extrabold text-[#1E3A5F] mt-1 flex items-center gap-2">
+                    <Mail className="w-6 h-6 text-[#1BA6C4]" />Email Notifications
+                  </h3>
+                  <p className="text-slate-500 text-xs font-medium">
+                    Automated email alerts keep pharmacy staff informed when stock gets critically low.
+                  </p>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="p-4 rounded-2xl bg-cyan-50 border border-cyan-200 space-y-1.5">
+                    <h4 className="font-extrabold text-[#1E3A5F] text-xs flex items-center gap-2">
+                      <Mail className="w-4 h-4 text-[#1BA6C4]" />Low-Stock Email Alert
+                    </h4>
+                    <p className="text-xs text-slate-700">
+                      When a medicine&apos;s stock reaches or drops below its configured threshold during a sale, MedTrack automatically sends an email to the configured pharmacy staff address — no manual action needed.
+                    </p>
+                  </div>
+                  <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1.5">
+                    <h4 className="font-extrabold text-[#1E3A5F] text-xs flex items-center gap-2">
+                      <Info className="w-4 h-4 text-teal-600" />Configuring the Alert Email Address
+                    </h4>
+                    <p className="text-xs text-slate-600">
+                      Go to <strong>Expiry Alerts</strong> → <em>&ldquo;Email Alert Settings &amp; Logs&rdquo;</em> tab. Enter the pharmacy staff email address and toggle which alert types are active. Click <em>&ldquo;Save Alert Settings&rdquo;</em>.
+                    </p>
+                  </div>
+                  <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1.5">
+                    <h4 className="font-extrabold text-[#1E3A5F] text-xs">Duplicate Alert Prevention</h4>
+                    <p className="text-xs text-slate-600">
+                      The system suppresses repeated emails while stock stays below threshold. A fresh alert is sent only after stock recovers above the threshold and then drops again — preventing inbox flooding.
+                    </p>
+                  </div>
+                  <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1.5">
+                    <h4 className="font-extrabold text-[#1E3A5F] text-xs">Viewing the Email Log</h4>
+                    <p className="text-xs text-slate-600">
+                      The same settings tab shows a log of all dispatched alerts with their <span className="font-bold text-emerald-700">SENT</span> or <span className="font-bold text-rose-700">FAILED</span> status, subject line, recipient, and timestamp.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+          </div>
         </div>
       </div>
     </div>

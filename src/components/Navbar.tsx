@@ -11,16 +11,12 @@ import {
   Boxes,
   AlertTriangle,
   RefreshCw,
-  Trash2,
-  Search,
-  FileSpreadsheet,
   LogOut,
   Menu,
   X,
   Building2,
   QrCode,
   BookOpen,
-  DollarSign,
   Users,
 } from "lucide-react";
 import BarcodeScannerModal from "./BarcodeScannerModal";
@@ -34,21 +30,15 @@ export default function Navbar() {
   const [scannerMode, setScannerMode] = useState<"check" | "stockIn">("check");
   const [manualOpen, setManualOpen] = useState(false);
 
-  if (!session || pathname === "/login" || pathname === "/register" || pathname?.startsWith("/remote-scan")) return null;
-
-  const isOwner = session.user.role === "owner";
+  if (!session || pathname === "/login" || pathname === "/register") return null;
 
   const navItems = [
-    { label: "Dashboard", shortLabel: "Dashboard", href: "/", icon: LayoutDashboard },
-    { label: "FEFO Dispense", shortLabel: "Dispense", href: "/sell", icon: ShoppingCart },
-    { label: "Patient Records", shortLabel: "Patients", href: "/patients", icon: Users },
-    { label: "Finance Tracker", shortLabel: "Finance", href: "/finance", icon: DollarSign },
-    { label: "Inventory", shortLabel: "Inventory", href: "/inventory", icon: Boxes },
-    { label: "Expiry Alerts", shortLabel: "Alerts", href: "/alerts", icon: AlertTriangle },
-    { label: "Restock", shortLabel: "Restock", href: "/restock", icon: RefreshCw },
-    { label: "Wastage", shortLabel: "Waste", href: "/wastage", icon: Trash2 },
-    { label: "FDA Reference", shortLabel: "FDA", href: "/reference", icon: Search },
-    ...(isOwner ? [{ label: "Audit & Exports", shortLabel: "Audit", href: "/audit", icon: FileSpreadsheet }] : []),
+    { label: "Dashboard",       shortLabel: "Dashboard", href: "/",          icon: LayoutDashboard },
+    { label: "FEFO Dispense",   shortLabel: "Dispense",  href: "/sell",       icon: ShoppingCart },
+    { label: "Patient Records", shortLabel: "Patients",  href: "/patients",   icon: Users },
+    { label: "Inventory",       shortLabel: "Inventory", href: "/inventory",  icon: Boxes },
+    { label: "Expiry Alerts",   shortLabel: "Alerts",    href: "/alerts",     icon: AlertTriangle },
+    { label: "Restock",         shortLabel: "Restock",   href: "/restock",    icon: RefreshCw },
   ];
 
   const handleOpenScanner = (mode: "check" | "stockIn") => {
@@ -80,17 +70,17 @@ export default function Navbar() {
 
             {/* Desktop Action Bar */}
             <div className="hidden md:flex items-center gap-2 lg:gap-3 shrink-0 min-w-0">
-              {/* Instruction Manual Trigger Button */}
+              {/* Instruction Manual */}
               <button
                 onClick={() => setManualOpen(true)}
                 className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-teal-50 hover:bg-teal-100/70 text-teal-800 border border-teal-200 text-xs font-bold transition-all cursor-pointer shadow-2xs shrink-0"
-                title="Open MedTrack Instruction Manual & Guide"
+                title="Open MedTrack Instruction Manual"
               >
                 <BookOpen className="w-3.5 h-3.5 text-teal-600" />
                 <span className="whitespace-nowrap">📖 Manual</span>
               </button>
 
-              {/* Dual Scanner Segmented Control */}
+              {/* Barcode Scanner: Check / Stock In */}
               <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200 shrink-0">
                 <button
                   onClick={() => handleOpenScanner("check")}
@@ -110,7 +100,7 @@ export default function Navbar() {
                 </button>
               </div>
 
-              {/* User Profile Info */}
+              {/* User Profile */}
               <div className="flex items-center gap-2 pl-2.5 border-l border-slate-200 shrink-0 min-w-0">
                 <div className="text-right text-xs truncate max-w-[140px] lg:max-w-none">
                   <p className="font-extrabold text-[#1A2B3C] leading-tight truncate">{session.user.name}</p>
@@ -138,29 +128,23 @@ export default function Navbar() {
               >
                 <BookOpen className="w-4 h-4 text-teal-600" />
               </button>
-
               <button
                 onClick={() => handleOpenScanner("check")}
                 className="px-2 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-[#1E3A5F] border border-slate-200 text-xs font-extrabold flex items-center gap-1 cursor-pointer whitespace-nowrap shrink-0"
-                title="Check Stock"
               >
                 <QrCode className="w-3.5 h-3.5 text-[#1E3A5F]" />
-                <span className="text-[10px] sm:text-[11px] whitespace-nowrap">Check</span>
+                <span className="text-[10px] sm:text-[11px]">Check</span>
               </button>
-
               <button
                 onClick={() => handleOpenScanner("stockIn")}
                 className="px-2 py-1.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-extrabold flex items-center gap-1 shadow-sm cursor-pointer whitespace-nowrap shrink-0"
-                title="Stock In Delivery"
               >
                 <Boxes className="w-3.5 h-3.5 text-white" />
-                <span className="text-[10px] sm:text-[11px] whitespace-nowrap">Stock In</span>
+                <span className="text-[10px] sm:text-[11px]">Stock In</span>
               </button>
-
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                 className="p-1.5 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 cursor-pointer shrink-0"
-                title="Menu"
               >
                 {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
               </button>
@@ -204,10 +188,7 @@ export default function Navbar() {
             </div>
 
             <button
-              onClick={() => {
-                setManualOpen(true);
-                setMobileMenuOpen(false);
-              }}
+              onClick={() => { setManualOpen(true); setMobileMenuOpen(false); }}
               className="w-full flex items-center justify-center gap-2 p-2.5 rounded-xl bg-teal-50 border border-teal-200 text-teal-900 text-xs font-extrabold cursor-pointer"
             >
               <BookOpen className="w-4 h-4 text-teal-600" />
@@ -246,7 +227,7 @@ export default function Navbar() {
                         : "text-slate-600 hover:bg-slate-100"
                     }`}
                   >
-                    <Icon className={`w-4.5 h-4.5 ${isActive ? "text-[#1BA6C4]" : "text-slate-400"}`} />
+                    <Icon className={`w-4 h-4 ${isActive ? "text-[#1BA6C4]" : "text-slate-400"}`} />
                     {item.label}
                   </Link>
                 );
@@ -264,7 +245,7 @@ export default function Navbar() {
         )}
       </header>
 
-      {/* Dual Mode Scanner Modal */}
+      {/* Barcode Scanner Modal */}
       {scannerOpen && (
         <BarcodeScannerModal
           mode={scannerMode}
