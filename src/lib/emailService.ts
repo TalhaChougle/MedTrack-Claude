@@ -100,14 +100,19 @@ export async function getShopAlertSettings(shopId: number): Promise<AlertSetting
 
     if (existing.length > 0) {
       const s = existing[0];
-      return {
+      const result = {
         alertEmail: s.alertEmail || "",
         enableLowStockEmails: Boolean(s.enableLowStockEmails),
         enableIncomingOrderEmails: Boolean(s.enableIncomingOrderEmails),
       };
+      console.log(
+        `[ALERT SETTINGS] shopId=${shopId} → recipient="${result.alertEmail}" ` +
+        `lowStock=${result.enableLowStockEmails} incomingOrder=${result.enableIncomingOrderEmails}`
+      );
+      return result;
     }
 
-    // Default to shop owner/admin email
+    // No row yet — seed a default row using the shop owner's email
     const shopUsers = await db
       .select()
       .from(users)
@@ -122,13 +127,18 @@ export async function getShopAlertSettings(shopId: number): Promise<AlertSetting
       enableIncomingOrderEmails: true,
     });
 
+    console.log(
+      `[ALERT SETTINGS] shopId=${shopId} → no saved settings found, ` +
+      `seeded default recipient="${defaultEmail}"`
+    );
+
     return {
       alertEmail: defaultEmail,
       enableLowStockEmails: true,
       enableIncomingOrderEmails: true,
     };
   } catch (err) {
-    console.error("Error fetching alert settings:", err);
+    console.error("[ALERT SETTINGS] Error fetching alert settings:", err);
     return {
       alertEmail: "",
       enableLowStockEmails: true,
@@ -247,16 +257,27 @@ export async function sendLowStockAlertEmail(params: {
 }) {
   const { shopId, medicineName, currentStock, reorderThreshold, manufacturer, batchInfo } = params;
 
+  console.log(
+    `[LOW STOCK CHECK] medicine="${medicineName}" stock=${currentStock} threshold=${reorderThreshold} shopId=${shopId}`
+  );
+
   try {
     const settings = await getShopAlertSettings(shopId);
 
     if (!settings.enableLowStockEmails) {
+      console.warn(`[LOW STOCK SKIPPED] Low stock emails are DISABLED for shopId=${shopId}.`);
       return { sent: false, reason: "Low stock email alerts are disabled." };
     }
 
     if (!settings.alertEmail) {
+      console.warn(
+        `[LOW STOCK SKIPPED] No alert email configured for shopId=${shopId}. ` +
+        `Go to Expiry Alerts → Email Alert Settings and save a recipient address.`
+      );
       return { sent: false, reason: "No alert email address configured." };
     }
+
+    console.log(`[LOW STOCK] Will attempt to send alert to "${settings.alertEmail}"`);
 
     // Duplicate-alert prevention
     const alreadyAlerted = await hasPendingLowStockAlert(shopId, medicineName);

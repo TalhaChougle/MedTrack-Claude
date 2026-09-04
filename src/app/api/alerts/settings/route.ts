@@ -84,6 +84,13 @@ export async function POST(req: Request) {
       });
     }
 
+    console.log(
+      `[ALERT SETTINGS SAVED] shopId=${shopId} ` +
+      `recipient="${cleanedEmail}" ` +
+      `lowStock=${Boolean(enableLowStockEmails)} ` +
+      `incomingOrder=${Boolean(enableIncomingOrderEmails)}`
+    );
+
     return NextResponse.json({
       success: true,
       message: "Alert notification settings saved successfully.",
