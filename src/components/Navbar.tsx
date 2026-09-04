@@ -16,11 +16,11 @@ import {
   X,
   Building2,
   QrCode,
-  BookOpen,
   Users,
+  ClipboardList,
+  Trash2,
 } from "lucide-react";
 import BarcodeScannerModal from "./BarcodeScannerModal";
-import InstructionManualModal from "./InstructionManualModal";
 
 export default function Navbar() {
   const { data: session } = useSession();
@@ -28,17 +28,18 @@ export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scannerOpen, setScannerOpen] = useState(false);
   const [scannerMode, setScannerMode] = useState<"check" | "stockIn">("check");
-  const [manualOpen, setManualOpen] = useState(false);
 
   if (!session || pathname === "/login" || pathname === "/register") return null;
 
   const navItems = [
-    { label: "Dashboard",       shortLabel: "Dashboard", href: "/",          icon: LayoutDashboard },
-    { label: "FEFO Dispense",   shortLabel: "Dispense",  href: "/sell",       icon: ShoppingCart },
-    { label: "Patient Records", shortLabel: "Patients",  href: "/patients",   icon: Users },
-    { label: "Inventory",       shortLabel: "Inventory", href: "/inventory",  icon: Boxes },
-    { label: "Expiry Alerts",   shortLabel: "Alerts",    href: "/alerts",     icon: AlertTriangle },
-    { label: "Restock",         shortLabel: "Restock",   href: "/restock",    icon: RefreshCw },
+    { label: "Dashboard",       shortLabel: "Dashboard", href: "/",             icon: LayoutDashboard },
+    { label: "FEFO Dispense",   shortLabel: "Dispense",  href: "/sell",         icon: ShoppingCart },
+    { label: "Patient Records", shortLabel: "Patients",  href: "/patients",     icon: Users },
+    { label: "Inventory",       shortLabel: "Inventory", href: "/inventory",    icon: Boxes },
+    { label: "Expiry Alerts",   shortLabel: "Alerts",    href: "/alerts",       icon: AlertTriangle },
+    { label: "Restock",         shortLabel: "Restock",   href: "/restock",      icon: RefreshCw },
+    { label: "Sales Log",       shortLabel: "Sales",     href: "/sales-log",    icon: ClipboardList },
+    { label: "Wastage Log",     shortLabel: "Wastage",   href: "/wastage-log",  icon: Trash2 },
   ];
 
   const handleOpenScanner = (mode: "check" | "stockIn") => {
@@ -70,16 +71,6 @@ export default function Navbar() {
 
             {/* Desktop Action Bar */}
             <div className="hidden md:flex items-center gap-2 lg:gap-3 shrink-0 min-w-0">
-              {/* Instruction Manual */}
-              <button
-                onClick={() => setManualOpen(true)}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-teal-50 hover:bg-teal-100/70 text-teal-800 border border-teal-200 text-xs font-bold transition-all cursor-pointer shadow-2xs shrink-0"
-                title="Open MedTrack Instruction Manual"
-              >
-                <BookOpen className="w-3.5 h-3.5 text-teal-600" />
-                <span className="whitespace-nowrap">📖 Manual</span>
-              </button>
-
               {/* Barcode Scanner: Check / Stock In */}
               <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200 shrink-0">
                 <button
@@ -121,13 +112,6 @@ export default function Navbar() {
 
             {/* Mobile Action Buttons */}
             <div className="flex md:hidden items-center gap-1 sm:gap-1.5 shrink-0">
-              <button
-                onClick={() => setManualOpen(true)}
-                className="p-2 rounded-xl bg-teal-50 hover:bg-teal-100/70 text-teal-800 border border-teal-200 text-xs font-extrabold flex items-center gap-1 cursor-pointer shrink-0"
-                title="Instruction Manual"
-              >
-                <BookOpen className="w-4 h-4 text-teal-600" />
-              </button>
               <button
                 onClick={() => handleOpenScanner("check")}
                 className="px-2 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-[#1E3A5F] border border-slate-200 text-xs font-extrabold flex items-center gap-1 cursor-pointer whitespace-nowrap shrink-0"
@@ -187,14 +171,6 @@ export default function Navbar() {
               <span className="text-[#1BA6C4] font-extrabold uppercase">{session.user.role} Account</span>
             </div>
 
-            <button
-              onClick={() => { setManualOpen(true); setMobileMenuOpen(false); }}
-              className="w-full flex items-center justify-center gap-2 p-2.5 rounded-xl bg-teal-50 border border-teal-200 text-teal-900 text-xs font-extrabold cursor-pointer"
-            >
-              <BookOpen className="w-4 h-4 text-teal-600" />
-              <span>📖 Open Instruction Manual</span>
-            </button>
-
             <div className="grid grid-cols-2 gap-2 py-2">
               <button
                 onClick={() => handleOpenScanner("check")}
@@ -253,12 +229,6 @@ export default function Navbar() {
           onSelectMode={(mode) => setScannerMode(mode)}
         />
       )}
-
-      {/* Instruction Manual Modal */}
-      <InstructionManualModal
-        isOpen={manualOpen}
-        onClose={() => setManualOpen(false)}
-      />
     </>
   );
 }

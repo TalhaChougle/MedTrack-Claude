@@ -15,11 +15,11 @@ import {
   ShieldCheck,
   QrCode,
   CheckCircle2,
-  BookOpen,
   Users,
+  ClipboardList,
+  Trash2,
 } from "lucide-react";
 import BarcodeScannerModal from "@/components/BarcodeScannerModal";
-import InstructionManualModal from "@/components/InstructionManualModal";
 
 export default function DashboardPage() {
   const { data: session, status } = useSession();
@@ -40,7 +40,6 @@ export default function DashboardPage() {
   const [recentAlerts, setRecentAlerts] = useState<any[]>([]);
   const [scannerOpen, setScannerOpen] = useState(false);
   const [scannerMode, setScannerMode] = useState<"check" | "stockIn">("check");
-  const [manualOpen, setManualOpen] = useState(false);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -133,14 +132,6 @@ export default function DashboardPage() {
 
           {/* Quick Primary Actions */}
           <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2.5 w-full md:w-auto">
-            <button
-              onClick={() => setManualOpen(true)}
-              className="px-3.5 py-2.5 rounded-2xl bg-white/20 hover:bg-white/30 text-white font-extrabold text-xs sm:text-sm flex items-center justify-center gap-2 border border-white/40 transition-all cursor-pointer shadow-sm backdrop-blur-sm"
-            >
-              <BookOpen className="w-4 h-4 text-white" />
-              <span>Instruction Manual</span>
-            </button>
-
             <Link
               href="/sell"
               className="px-4 py-2.5 rounded-2xl bg-white text-[#1BA6C4] hover:bg-slate-50 font-black text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg transition-all transform hover:scale-[1.02]"
@@ -250,22 +241,6 @@ export default function DashboardPage() {
           </h2>
 
           <div className="space-y-3">
-            <button
-              onClick={() => setManualOpen(true)}
-              className="w-full text-left p-4 rounded-2xl bg-teal-50/70 border border-teal-200 hover:border-teal-400 hover:shadow-md flex items-center justify-between group transition-all cursor-pointer"
-            >
-              <div className="flex items-center gap-3">
-                <div className="p-3 rounded-xl bg-teal-600 text-white group-hover:scale-105 transition-transform shadow-xs">
-                  <BookOpen className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-extrabold text-[#1E3A5F]">User Instruction Manual</h3>
-                  <p className="text-xs text-slate-600 font-medium">System guide, dispensing &amp; dashboard help</p>
-                </div>
-              </div>
-              <ArrowRight className="w-4 h-4 text-teal-600 group-hover:translate-x-1 transition-transform" />
-            </button>
-
             <Link
               href="/sell"
               className="p-4 rounded-2xl bg-white border border-slate-200 hover:border-teal-400 hover:shadow-md flex items-center justify-between group transition-all"
@@ -328,6 +303,38 @@ export default function DashboardPage() {
                 </div>
               </div>
               <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-teal-600 transition-colors" />
+            </Link>
+
+            <Link
+              href="/sales-log"
+              className="p-4 rounded-2xl bg-white border border-slate-200 hover:border-teal-400 hover:shadow-md flex items-center justify-between group transition-all"
+            >
+              <div className="flex items-center gap-3">
+                <div className="p-3 rounded-xl bg-teal-50 text-teal-700 group-hover:scale-105 transition-transform">
+                  <ClipboardList className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-[#1E3A5F]">Sales Log</h3>
+                  <p className="text-xs text-slate-500">Automatic dispensing transaction records</p>
+                </div>
+              </div>
+              <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-teal-600 transition-colors" />
+            </Link>
+
+            <Link
+              href="/wastage-log"
+              className="p-4 rounded-2xl bg-white border border-slate-200 hover:border-rose-400 hover:shadow-md flex items-center justify-between group transition-all"
+            >
+              <div className="flex items-center gap-3">
+                <div className="p-3 rounded-xl bg-rose-50 text-rose-600 group-hover:scale-105 transition-transform">
+                  <Trash2 className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-[#1E3A5F]">Wastage Log</h3>
+                  <p className="text-xs text-slate-500">Record expired or damaged write-offs</p>
+                </div>
+              </div>
+              <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-rose-500 transition-colors" />
             </Link>
           </div>
         </div>
@@ -421,9 +428,6 @@ export default function DashboardPage() {
           onSelectMode={(m) => setScannerMode(m)}
         />
       )}
-
-      {/* Instruction Manual Modal */}
-      <InstructionManualModal isOpen={manualOpen} onClose={() => setManualOpen(false)} />
     </div>
   );
 }
