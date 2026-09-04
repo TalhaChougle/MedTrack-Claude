@@ -34,6 +34,8 @@ export default function ExpiryAlertsPage() {
   const [savingSettings, setSavingSettings] = useState(false);
   const [settingsSuccessMsg, setSettingsSuccessMsg] = useState("");
   const [settingsErrorMsg, setSettingsErrorMsg] = useState("");
+  const [testEmailLoading, setTestEmailLoading] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
 
   // Wastage write-off modal
   const [wastageModalOpen, setWastageModalOpen] = useState(false);
@@ -131,6 +133,46 @@ export default function ExpiryAlertsPage() {
       setSettingsErrorMsg("Network error saving alert settings.");
     } finally {
       setSavingSettings(false);
+    }
+  };
+
+  const handleSendTestEmail = async () => {
+    setTestEmailLoading(true);
+    setSettingsSuccessMsg("");
+    setSettingsErrorMsg("");
+    try {
+      const res = await fetch("/api/alerts/test-email", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) {
+        setSettingsErrorMsg(data.error || "Test email failed.");
+      } else {
+        setSettingsSuccessMsg(`✅ Test email sent to ${data.recipient}. Check your inbox (and spam folder).`);
+      }
+    } catch {
+      setSettingsErrorMsg("Network error sending test email.");
+    } finally {
+      setTestEmailLoading(false);
+    }
+  };
+
+  const handleResetAlertState = async () => {
+    if (!confirm("This will clear the duplicate-suppression log so the next low-stock event sends a fresh email. Continue?")) return;
+    setResetLoading(true);
+    setSettingsSuccessMsg("");
+    setSettingsErrorMsg("");
+    try {
+      const res = await fetch("/api/alerts/test-email", { method: "DELETE" });
+      const data = await res.json();
+      if (!res.ok) {
+        setSettingsErrorMsg(data.error || "Reset failed.");
+      } else {
+        setSettingsSuccessMsg("🔄 Alert state reset. The next low-stock event will trigger a fresh email.");
+        fetchAlertSettings();
+      }
+    } catch {
+      setSettingsErrorMsg("Network error resetting alert state.");
+    } finally {
+      setResetLoading(false);
     }
   };
 
@@ -440,14 +482,38 @@ export default function ExpiryAlertsPage() {
                 </label>
               </div>
 
-              <button
-                type="submit"
-                disabled={savingSettings}
-                className="px-6 py-3 rounded-2xl bg-[#1BA6C4] hover:bg-[#158fa9] text-white font-extrabold text-xs shadow-md transition-all cursor-pointer flex items-center gap-2"
-              >
-                <Send className="w-4 h-4" />
-                <span>Save Alert Settings</span>
-              </button>
+              <div className="flex flex-wrap items-center gap-3">
+                <button
+                  type="submit"
+                  disabled={savingSettings}
+                  className="px-6 py-3 rounded-2xl bg-[#1BA6C4] hover:bg-[#158fa9] text-white font-extrabold text-xs shadow-md transition-all cursor-pointer flex items-center gap-2"
+                >
+                  <Send className="w-4 h-4" />
+                  <span>{savingSettings ? "Saving…" : "Save Alert Settings"}</span>
+                </button>
+
+                <button
+                  type="button"
+                  disabled={testEmailLoading || !alertEmail}
+                  onClick={handleSendTestEmail}
+                  className="px-5 py-3 rounded-2xl bg-teal-600 hover:bg-teal-700 disabled:opacity-50 text-white font-extrabold text-xs shadow-md transition-all cursor-pointer flex items-center gap-2"
+                  title="Send a real Brevo test email to the address above to verify delivery"
+                >
+                  <Mail className="w-4 h-4" />
+                  <span>{testEmailLoading ? "Sending…" : "Send Test Email"}</span>
+                </button>
+
+                <button
+                  type="button"
+                  disabled={resetLoading}
+                  onClick={handleResetAlertState}
+                  className="px-5 py-3 rounded-2xl bg-slate-100 hover:bg-amber-50 border border-slate-200 hover:border-amber-300 disabled:opacity-50 text-slate-700 hover:text-amber-800 font-extrabold text-xs transition-all cursor-pointer flex items-center gap-2"
+                  title="Clear duplicate-suppression state so the next low-stock event triggers a fresh email (use after changing recipient)"
+                >
+                  <Settings className="w-4 h-4" />
+                  <span>{resetLoading ? "Resetting…" : "Reset Alert State"}</span>
+                </button>
+              </div>
             </form>
           </div>
 
