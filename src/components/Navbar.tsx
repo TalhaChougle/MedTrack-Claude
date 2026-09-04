@@ -19,6 +19,7 @@ import {
   Users,
   ClipboardList,
   Trash2,
+  BarChart2,
 } from "lucide-react";
 import BarcodeScannerModal from "./BarcodeScannerModal";
 
@@ -40,6 +41,7 @@ export default function Navbar() {
     { label: "Restock",         shortLabel: "Restock",   href: "/restock",      icon: RefreshCw },
     { label: "Sales Log",       shortLabel: "Sales",     href: "/sales-log",    icon: ClipboardList },
     { label: "Wastage Log",     shortLabel: "Wastage",   href: "/wastage-log",  icon: Trash2 },
+    { label: "Reports",         shortLabel: "Reports",   href: "/reports",      icon: BarChart2 },
   ];
 
   const handleOpenScanner = (mode: "check" | "stockIn") => {

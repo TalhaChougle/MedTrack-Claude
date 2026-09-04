@@ -18,6 +18,7 @@ import {
   Users,
   ClipboardList,
   Trash2,
+  BarChart2,
 } from "lucide-react";
 import BarcodeScannerModal from "@/components/BarcodeScannerModal";
 
@@ -335,6 +336,22 @@ export default function DashboardPage() {
                 </div>
               </div>
               <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-rose-500 transition-colors" />
+            </Link>
+
+            <Link
+              href="/reports"
+              className="p-4 rounded-2xl bg-white border border-slate-200 hover:border-teal-400 hover:shadow-md flex items-center justify-between group transition-all"
+            >
+              <div className="flex items-center gap-3">
+                <div className="p-3 rounded-xl bg-teal-50 text-teal-700 group-hover:scale-105 transition-transform">
+                  <BarChart2 className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-[#1E3A5F]">Reports</h3>
+                  <p className="text-xs text-slate-500">Sales &amp; Wastage reports with CSV / PDF export</p>
+                </div>
+              </div>
+              <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-teal-600 transition-colors" />
             </Link>
           </div>
         </div>

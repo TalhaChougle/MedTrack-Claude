@@ -2,49 +2,67 @@ import { NextResponse } from "next/server";
 import { getAuthSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { wastageLogs, batches, medicines, users, auditLogs } from "@/lib/db/schema";
-import { eq, and, desc, gt } from "drizzle-orm";
+import { eq, and, desc, gt, gte, lte, like } from "drizzle-orm";
 import {
   sendLowStockAlertEmail,
-  recordStockRecovery,
   getShopAlertSettings,
 } from "@/lib/emailService";
 
-export async function GET() {
+// ─── GET — wastage log (supports optional filter query params) ───────────────
+export async function GET(req: Request) {
   const session = await getAuthSession();
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const shopId = session.user.shopId;
+  const { searchParams } = new URL(req.url);
+
+  const startDate = searchParams.get("startDate"); // YYYY-MM-DD
+  const endDate   = searchParams.get("endDate");   // YYYY-MM-DD
+  const medicine  = searchParams.get("medicine");  // partial name match
+  const reason    = searchParams.get("reason");    // exact match
 
   try {
+    const conditions = [eq(wastageLogs.shopId, shopId)];
+
+    if (startDate) conditions.push(gte(wastageLogs.date, startDate));
+    if (endDate)   conditions.push(lte(wastageLogs.date, endDate + "T23:59:59.999Z"));
+    if (reason)    conditions.push(eq(wastageLogs.reason, reason));
+
     const list = await db
       .select({
-        id: wastageLogs.id,
-        shopId: wastageLogs.shopId,
-        medicineId: wastageLogs.medicineId,
-        medicineName: medicines.name,
-        batchId: wastageLogs.batchId,
-        batchNumber: wastageLogs.batchNumber,
-        quantity: wastageLogs.quantity,
-        reason: wastageLogs.reason,
-        performedBy: wastageLogs.performedBy,
+        id:              wastageLogs.id,
+        shopId:          wastageLogs.shopId,
+        medicineId:      wastageLogs.medicineId,
+        medicineName:    medicines.name,
+        batchId:         wastageLogs.batchId,
+        batchNumber:     wastageLogs.batchNumber,
+        quantity:        wastageLogs.quantity,
+        reason:          wastageLogs.reason,
+        performedBy:     wastageLogs.performedBy,
         performedByName: users.name,
-        date: wastageLogs.date,
+        date:            wastageLogs.date,
       })
       .from(wastageLogs)
       .innerJoin(medicines, eq(wastageLogs.medicineId, medicines.id))
       .leftJoin(users, eq(wastageLogs.performedBy, users.id))
-      .where(eq(wastageLogs.shopId, shopId))
+      .where(and(...conditions))
       .orderBy(desc(wastageLogs.date));
 
-    return NextResponse.json(list);
+    // Post-filter by medicine name (can't easily join-filter with Drizzle's current API)
+    const filtered = medicine
+      ? list.filter((r) => r.medicineName?.toLowerCase().includes(medicine.toLowerCase()))
+      : list;
+
+    return NextResponse.json(filtered);
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : "Failed to fetch wastage logs";
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
 
+// ─── POST — record a wastage write-off ──────────────────────────────────────
 export async function POST(req: Request) {
   const session = await getAuthSession();
   if (!session) {
@@ -72,18 +90,10 @@ export async function POST(req: Request) {
     const [batchItem] = await db
       .select()
       .from(batches)
-      .where(
-        and(
-          eq(batches.id, bId),
-          eq(batches.shopId, shopId)
-        )
-      );
+      .where(and(eq(batches.id, bId), eq(batches.shopId, shopId)));
 
     if (!batchItem) {
-      return NextResponse.json(
-        { error: "Batch not found in your shop." },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Batch not found in your shop." }, { status: 404 });
     }
 
     if (qty > batchItem.quantity) {
@@ -95,26 +105,23 @@ export async function POST(req: Request) {
 
     // 1. Deduct from batch
     const newQty = batchItem.quantity - qty;
-    await db
-      .update(batches)
-      .set({ quantity: newQty })
-      .where(eq(batches.id, batchItem.id));
+    await db.update(batches).set({ quantity: newQty }).where(eq(batches.id, batchItem.id));
 
-    // 2. Insert into wastage_logs with batch_number as text
+    // 2. Insert wastage log
     const [wastageEntry] = await db
       .insert(wastageLogs)
       .values({
         shopId,
-        medicineId: batchItem.medicineId,
-        batchId: batchItem.id,
+        medicineId:  batchItem.medicineId,
+        batchId:     batchItem.id,
         batchNumber: batchItem.batchNumber,
-        quantity: qty,
-        reason: reason.trim(),
+        quantity:    qty,
+        reason:      reason.trim(),
         performedBy: userId,
       })
       .returning();
 
-    // 3. Write audit log entry
+    // 3. Audit log
     const [med] = await db
       .select()
       .from(medicines)
@@ -123,34 +130,26 @@ export async function POST(req: Request) {
     await db.insert(auditLogs).values({
       shopId,
       userId,
-      action: "WASTAGE",
+      action:     "WASTAGE",
       entityType: "batch",
-      entityId: batchItem.id,
+      entityId:   batchItem.id,
       detail: JSON.stringify({
-        medicineName: med?.name || "Unknown",
-        batchNumber: batchItem.batchNumber,
+        medicineName:      med?.name || "Unknown",
+        batchNumber:       batchItem.batchNumber,
         quantityWrittenOff: qty,
-        reason: wastageEntry.reason,
-        remainingInBatch: newQty,
+        reason:            wastageEntry.reason,
+        remainingInBatch:  newQty,
       }),
     });
 
-    // 4. Check low-stock threshold after deduction and trigger email if needed.
-    //    We only check if we have a medicine record and it has a threshold set.
+    // 4. Low-stock email check after deduction
     if (med && med.reorderThreshold > 0) {
       const todayStr = new Date().toISOString().split("T")[0];
 
-      // Sum all unexpired batch quantities for this medicine
       const allBatches = await db
         .select()
         .from(batches)
-        .where(
-          and(
-            eq(batches.shopId, shopId),
-            eq(batches.medicineId, med.id),
-            gt(batches.quantity, 0)
-          )
-        );
+        .where(and(eq(batches.shopId, shopId), eq(batches.medicineId, med.id), gt(batches.quantity, 0)));
 
       const remainingStock = allBatches
         .filter((b) => b.expiryDate >= todayStr)
@@ -159,13 +158,12 @@ export async function POST(req: Request) {
       if (remainingStock <= med.reorderThreshold) {
         await sendLowStockAlertEmail({
           shopId,
-          medicineName: med.name,
-          currentStock: remainingStock,
+          medicineName:     med.name,
+          currentStock:     remainingStock,
           reorderThreshold: med.reorderThreshold,
-          manufacturer: med.manufacturer,
+          manufacturer:     med.manufacturer,
         });
       }
-      // No recovery marker needed here — wastage only reduces stock, never increases it.
     }
 
     return NextResponse.json(wastageEntry, { status: 201 });
