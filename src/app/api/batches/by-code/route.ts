@@ -2,11 +2,12 @@ import { NextResponse } from "next/server";
 import { getAuthSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { medicines, batches, auditLogs, shops, users } from "@/lib/db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, gt } from "drizzle-orm";
 import { autoClassifySchedule } from "@/lib/scheduleClassifier";
 import { persistCurrentDatabaseState, syncAndRestoreDatabase } from "@/lib/db/storeSync";
 import { lookupBarcodeDetails } from "@/lib/barcodeLookup";
 import { lookupBarcodeWithFallback } from "@/lib/server/barcodeLookupServer";
+import { recordStockRecovery, getShopAlertSettings } from "@/lib/emailService";
 
 function suggestNextBatchNumber(batchNumbers: string[]): string {
   let maxNum = 0;
@@ -223,6 +224,42 @@ export async function POST(req: Request) {
         supplier: newBatch.supplier,
       }),
     });
+
+    // After stocking in via barcode scanner, check if the medicine is now above
+    // its reorder threshold.  If so, insert a RECOVERY marker so the next stock
+    // drop triggers a fresh low-stock email (instead of being suppressed as a
+    // duplicate of an earlier alert).
+    if (med.reorderThreshold > 0) {
+      const todayStr = new Date().toISOString().split("T")[0];
+
+      const allBatches = await db
+        .select()
+        .from(batches)
+        .where(
+          and(
+            eq(batches.shopId, shopId),
+            eq(batches.medicineId, med.id),
+            gt(batches.quantity, 0)
+          )
+        );
+
+      const totalStock = allBatches
+        .filter((b) => b.expiryDate >= todayStr)
+        .reduce((sum, b) => sum + b.quantity, 0);
+
+      if (totalStock > med.reorderThreshold) {
+        const settings = await getShopAlertSettings(shopId);
+        if (settings.alertEmail) {
+          await recordStockRecovery({
+            shopId,
+            medicineName: med.name,
+            currentStock: totalStock,
+            reorderThreshold: med.reorderThreshold,
+            recipientEmail: settings.alertEmail,
+          });
+        }
+      }
+    }
 
     return NextResponse.json(
       {

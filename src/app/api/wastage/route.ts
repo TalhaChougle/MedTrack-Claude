@@ -2,7 +2,12 @@ import { NextResponse } from "next/server";
 import { getAuthSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { wastageLogs, batches, medicines, users, auditLogs } from "@/lib/db/schema";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, gt } from "drizzle-orm";
+import {
+  sendLowStockAlertEmail,
+  recordStockRecovery,
+  getShopAlertSettings,
+} from "@/lib/emailService";
 
 export async function GET() {
   const session = await getAuthSession();
@@ -102,7 +107,7 @@ export async function POST(req: Request) {
         shopId,
         medicineId: batchItem.medicineId,
         batchId: batchItem.id,
-        batchNumber: batchItem.batchNumber, // Stored as text for audit durability
+        batchNumber: batchItem.batchNumber,
         quantity: qty,
         reason: reason.trim(),
         performedBy: userId,
@@ -129,6 +134,39 @@ export async function POST(req: Request) {
         remainingInBatch: newQty,
       }),
     });
+
+    // 4. Check low-stock threshold after deduction and trigger email if needed.
+    //    We only check if we have a medicine record and it has a threshold set.
+    if (med && med.reorderThreshold > 0) {
+      const todayStr = new Date().toISOString().split("T")[0];
+
+      // Sum all unexpired batch quantities for this medicine
+      const allBatches = await db
+        .select()
+        .from(batches)
+        .where(
+          and(
+            eq(batches.shopId, shopId),
+            eq(batches.medicineId, med.id),
+            gt(batches.quantity, 0)
+          )
+        );
+
+      const remainingStock = allBatches
+        .filter((b) => b.expiryDate >= todayStr)
+        .reduce((sum, b) => sum + b.quantity, 0);
+
+      if (remainingStock <= med.reorderThreshold) {
+        await sendLowStockAlertEmail({
+          shopId,
+          medicineName: med.name,
+          currentStock: remainingStock,
+          reorderThreshold: med.reorderThreshold,
+          manufacturer: med.manufacturer,
+        });
+      }
+      // No recovery marker needed here — wastage only reduces stock, never increases it.
+    }
 
     return NextResponse.json(wastageEntry, { status: 201 });
   } catch (error: unknown) {
