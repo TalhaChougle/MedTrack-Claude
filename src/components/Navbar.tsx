@@ -7,7 +7,6 @@ import { useState } from "react";
 import {
   Pill,
   LayoutDashboard,
-  ShoppingCart,
   Boxes,
   AlertTriangle,
   RefreshCw,
@@ -33,15 +32,14 @@ export default function Navbar() {
   if (!session || pathname === "/login" || pathname === "/register") return null;
 
   const navItems = [
-    { label: "Dashboard",       shortLabel: "Dashboard", href: "/",             icon: LayoutDashboard },
-    { label: "FEFO Dispense",   shortLabel: "Dispense",  href: "/sell",         icon: ShoppingCart },
-    { label: "Patient Records", shortLabel: "Patients",  href: "/patients",     icon: Users },
-    { label: "Inventory",       shortLabel: "Inventory", href: "/inventory",    icon: Boxes },
-    { label: "Expiry Alerts",   shortLabel: "Alerts",    href: "/alerts",       icon: AlertTriangle },
-    { label: "Restock",         shortLabel: "Restock",   href: "/restock",      icon: RefreshCw },
-    { label: "Sales Log",       shortLabel: "Sales",     href: "/sales-log",    icon: ClipboardList },
-    { label: "Wastage Log",     shortLabel: "Wastage",   href: "/wastage-log",  icon: Trash2 },
-    { label: "Reports",         shortLabel: "Reports",   href: "/reports",      icon: BarChart2 },
+    { label: "Dashboard",              shortLabel: "Dashboard", href: "/",                        icon: LayoutDashboard },
+    { label: "Inventory & Dispensing", shortLabel: "Inventory", href: "/inventory",               icon: Boxes },
+    { label: "Patient Records",        shortLabel: "Patients",  href: "/patients",                icon: Users },
+    { label: "Expiry Alerts",          shortLabel: "Alerts",    href: "/alerts",                  icon: AlertTriangle },
+    { label: "Restock",                shortLabel: "Restock",   href: "/restock",                 icon: RefreshCw },
+    { label: "Sales Log",              shortLabel: "Sales",     href: "/sales-log",               icon: ClipboardList },
+    { label: "Wastage Log",            shortLabel: "Wastage",   href: "/wastage-log",             icon: Trash2 },
+    { label: "Reports",                shortLabel: "Reports",   href: "/reports",                 icon: BarChart2 },
   ];
 
   const handleOpenScanner = (mode: "check" | "stockIn") => {

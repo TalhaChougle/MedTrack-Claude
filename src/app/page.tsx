@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   Pill,
-  ShoppingCart,
   Boxes,
   AlertTriangle,
   RefreshCw,
@@ -134,11 +133,11 @@ export default function DashboardPage() {
           {/* Quick Primary Actions */}
           <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2.5 w-full md:w-auto">
             <Link
-              href="/sell"
+              href="/inventory"
               className="px-4 py-2.5 rounded-2xl bg-white text-[#1BA6C4] hover:bg-slate-50 font-black text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg transition-all transform hover:scale-[1.02]"
             >
-              <ShoppingCart className="w-4 h-4 text-[#1BA6C4]" />
-              <span>FEFO Point of Sale</span>
+              <Boxes className="w-4 h-4 text-[#1BA6C4]" />
+              <span>Inventory &amp; Dispensing</span>
             </Link>
 
             <button
@@ -243,12 +242,12 @@ export default function DashboardPage() {
 
           <div className="space-y-3">
             <Link
-              href="/sell"
+              href="/inventory?tab=dispense"
               className="p-4 rounded-2xl bg-white border border-slate-200 hover:border-teal-400 hover:shadow-md flex items-center justify-between group transition-all"
             >
               <div className="flex items-center gap-3">
                 <div className="p-3 rounded-xl bg-teal-50 text-teal-700 group-hover:scale-105 transition-transform">
-                  <ShoppingCart className="w-5 h-5" />
+                  <Boxes className="w-5 h-5" />
                 </div>
                 <div>
                   <h3 className="text-sm font-bold text-[#1E3A5F]">FEFO Point of Sale</h3>
