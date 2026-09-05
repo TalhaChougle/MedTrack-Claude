@@ -242,7 +242,7 @@ export default function DashboardPage() {
 
           <div className="space-y-3">
             <Link
-              href="/inventory?tab=dispense"
+              href="/inventory"
               className="p-4 rounded-2xl bg-white border border-slate-200 hover:border-teal-400 hover:shadow-md flex items-center justify-between group transition-all"
             >
               <div className="flex items-center gap-3">
