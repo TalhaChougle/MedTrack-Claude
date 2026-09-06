@@ -16,8 +16,6 @@ import {
   Building2,
   QrCode,
   Users,
-  ClipboardList,
-  Trash2,
   BarChart2,
 } from "lucide-react";
 import BarcodeScannerModal from "./BarcodeScannerModal";
@@ -32,14 +30,12 @@ export default function Navbar() {
   if (!session || pathname === "/login" || pathname === "/register") return null;
 
   const navItems = [
-    { label: "Dashboard",              shortLabel: "Dashboard", href: "/",                        icon: LayoutDashboard },
-    { label: "Inventory & Dispensing", shortLabel: "Inventory", href: "/inventory",               icon: Boxes },
-    { label: "Patient Records",        shortLabel: "Patients",  href: "/patients",                icon: Users },
-    { label: "Expiry Alerts",          shortLabel: "Alerts",    href: "/alerts",                  icon: AlertTriangle },
-    { label: "Restock",                shortLabel: "Restock",   href: "/restock",                 icon: RefreshCw },
-    { label: "Sales Log",              shortLabel: "Sales",     href: "/sales-log",               icon: ClipboardList },
-    { label: "Wastage Log",            shortLabel: "Wastage",   href: "/wastage-log",             icon: Trash2 },
-    { label: "Reports",                shortLabel: "Reports",   href: "/reports",                 icon: BarChart2 },
+    { label: "Dashboard",              shortLabel: "Dashboard", href: "/",          icon: LayoutDashboard },
+    { label: "Inventory & Dispensing", shortLabel: "Inventory", href: "/inventory", icon: Boxes },
+    { label: "Patient Records",        shortLabel: "Patients",  href: "/patients",  icon: Users },
+    { label: "Expiry Alerts",          shortLabel: "Alerts",    href: "/alerts",    icon: AlertTriangle },
+    { label: "Restock",                shortLabel: "Restock",   href: "/restock",   icon: RefreshCw },
+    { label: "Reports",                shortLabel: "Reports",   href: "/reports",   icon: BarChart2 },
   ];
 
   const handleOpenScanner = (mode: "check" | "stockIn") => {
